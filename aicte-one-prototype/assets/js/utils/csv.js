@@ -55,17 +55,38 @@ const CSVUtil = {
     const lines = text.split(/\r?\n/).filter(line => line.trim().length > 0);
     if (!lines.length) return [];
 
-    const headers = lines[0].split(",").map(h => h.trim().replace(/^["']|["']$/g, ""));
+    const parseLine = (line) => {
+      const values = [];
+      let inQuotes = false;
+      let current = '';
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+          if (inQuotes && line[i + 1] === '"') {
+            current += '"';
+            i++; // skip escaped quote
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (char === ',' && !inQuotes) {
+          values.push(current.trim().replace(/^["']|["']$/g, ''));
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      values.push(current.trim().replace(/^["']|["']$/g, ''));
+      return values;
+    };
+
+    const headers = parseLine(lines[0]);
     const records = [];
 
     for (let i = 1; i < lines.length; i++) {
-      const row = lines[i];
-      // Regex handling quoted commas
-      const matches = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || row.split(",");
+      const values = parseLine(lines[i]);
       const obj = {};
       headers.forEach((header, idx) => {
-        let val = matches[idx] ? matches[idx].trim().replace(/^["']|["']$/g, "") : "";
-        obj[header] = val;
+        obj[header] = values[idx] !== undefined ? values[idx] : "";
       });
       records.push(obj);
     }
@@ -132,5 +153,10 @@ const CSVUtil = {
   }
 };
 
-window.CSVUtil = CSVUtil;
-window.CsvUtil = CSVUtil;
+if (typeof window !== "undefined") {
+  window.CSVUtil = CSVUtil;
+  window.CsvUtil = CSVUtil;
+}
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { CSVUtil, CsvUtil: CSVUtil };
+}

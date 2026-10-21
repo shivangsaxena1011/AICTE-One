@@ -42,7 +42,7 @@ echo [INFO] Starting AICTE ONE FastAPI Server on http://localhost:8000 ...
 echo [INFO] Press Ctrl+C at any time to stop the server.
 echo.
 
-start "" "http://localhost:8000/"
+start "" cmd /c "timeout /t 2 >nul & start http://localhost:8000/"
 python backend/main.py
 
 pause

@@ -12,6 +12,7 @@ from backend.database import get_db
 from backend.models import Complaint, CoordinationLink, Institution, AuditLog
 from backend.schemas import ComplaintCreate, CoordinationLinkCreate
 from backend.services.overlap_detector import overlap_detector
+from backend.auth import require_roles, ROLE_VIGILANCE, ROLE_ADMIN
 
 router = APIRouter(prefix="/api/complaints", tags=["Complaints"])
 
@@ -189,7 +190,13 @@ def transfer_complaint(id: str, new_bureau: str = Form(...), reason: str = Form(
     return {"message": f"Case transferred to {new_bureau}"}
 
 @router.post("/{id}/dispose")
-def dispose_complaint(id: str, resolution_notes: str = Form(...), actor: str = Form("Disposal Officer"), db: Session = Depends(get_db)):
+def dispose_complaint(
+    id: str,
+    resolution_notes: str = Form(...),
+    actor: str = Form("Disposal Officer"),
+    auth: dict = Depends(require_roles(ROLE_VIGILANCE, ROLE_ADMIN)),
+    db: Session = Depends(get_db)
+):
     cplt = db.query(Complaint).filter(Complaint.id == id).first()
     if not cplt:
         raise HTTPException(status_code=404, detail="Complaint not found")

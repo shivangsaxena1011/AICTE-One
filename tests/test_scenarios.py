@@ -243,9 +243,25 @@ def test_scenario_h_audit_trail_logging():
 
 # Scenario I — Permissions & Authorization Model
 def test_scenario_i_role_based_permissions():
-    # Attempting to fetch non-existent record raises proper 404
+    # 1. Attempting to fetch non-existent record raises proper 404
     resp = client.get("/api/institutions/NON-EXISTENT-ID")
     assert resp.status_code == 404
+
+    # 2. Institutional user cannot dispose vigilance complaint (403 Forbidden)
+    forbidden_resp = client.post(
+        "/api/complaints/PGRC-26-01842/dispose",
+        data={"resolution_notes": "Attempted unauthorized closure"},
+        headers={"X-Role": "INSTITUTION_USER"}
+    )
+    assert forbidden_resp.status_code == 403
+
+    # 3. Authorized Vigilance Officer or Administrator can dispose complaint (200 OK)
+    allowed_resp = client.post(
+        "/api/complaints/PGRC-26-01842/dispose",
+        data={"resolution_notes": "Official disposal by competent vigilance authority"},
+        headers={"X-Role": "VIGILANCE_OFFICER"}
+    )
+    assert allowed_resp.status_code == 200
 
 # Scenario J — CSV Data Import & Duplicate Detection
 def test_scenario_j_csv_data_import():

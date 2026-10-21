@@ -5,8 +5,8 @@ import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    APP_NAME: str = "AICTE ONE — Unified Institutional Intelligence Platform"
-    APP_VERSION: str = "2.0.0"
+    APP_NAME: str = "AICTE ONE - Unified Institutional Intelligence Platform"
+    APP_VERSION: str = "2.4.0"
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     
     # Database
