@@ -1,15 +1,257 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="refresh" content="0; url=aicte-one-prototype/index.html">
-  <title>AICTE ONE — Unified Institutional Governance Platform</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a192f">
+  <title>AICTE ONE — Unified Institution Intelligence, Approval & Compliance Platform</title>
+  <link rel="stylesheet" href="assets/css/app.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS Framework CDN for utility classes -->
+  <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    window.location.replace("aicte-one-prototype/index.html" + window.location.hash);
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: {
+              700: '#1e3a68',
+              800: '#102a4d',
+              850: '#0d223f',
+              900: '#0a192f',
+              950: '#060f1d',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
   </script>
 </head>
-<body style="font-family:sans-serif;text-align:center;padding:50px;background:#0a192f;color:#fff">
-  <h2>Loading AICTE ONE Governance Platform...</h2>
-  <p><a href="aicte-one-prototype/index.html" style="color:#60a5fa">Click here if you are not redirected automatically.</a></p>
+<body class="bg-slate-50 text-slate-800 antialiased font-sans">
+  <!-- Government Official Top Stripe -->
+  <div class="h-1 bg-gradient-to-r from-amber-600 via-white to-emerald-700 w-full fixed top-0 left-0 z-50"></div>
+
+  <div class="flex min-h-screen pt-1">
+    <!-- Persistent Sidebar Navigation Shell -->
+    <aside id="sidebar" class="sidebar w-64 bg-navy-900 text-slate-300 flex flex-col fixed inset-y-0 left-0 z-40 shadow-xl overflow-y-auto">
+      <!-- Brand & Emblems -->
+      <div class="p-5 border-b border-navy-800 flex items-center gap-3">
+        <div class="w-10 h-10 rounded bg-navy-800 border border-navy-700 flex items-center justify-center font-bold text-lg text-white font-mono shadow-inner">
+          A1
+        </div>
+        <div>
+          <div class="text-base font-extrabold tracking-tight text-white leading-tight">AICTE ONE</div>
+          <div class="text-[10px] uppercase tracking-wider text-slate-400 font-medium">Institutional Governance</div>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="flex-1 px-3 py-4 space-y-6 text-xs">
+        <div>
+          <div class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Core Operations</div>
+          <div class="space-y-1">
+            <a href="#/overview" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded font-medium transition-colors" data-route="overview">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+              <span>1. Executive Overview</span>
+            </a>
+            <a href="#/institutions" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded font-medium transition-colors" data-route="institutions">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+              <span>2. Institution Directory</span>
+            </a>
+            <a href="#/digitalTwin" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded font-medium transition-colors" data-route="digitalTwin">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+              <span>3. Digital Twin</span>
+            </a>
+            <a href="#/applications" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded font-medium transition-colors" data-route="applications">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+              <span>4. Approval Applications</span>
+            </a>
+            <a href="#/scrutiny" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded font-medium transition-colors" data-route="scrutiny">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+              <span>5. Scrutiny & Workflow</span>
+            </a>
+            <a href="#/evc" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded font-medium transition-colors" data-route="evc">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+              <span>6. EVC Scheduling</span>
+            </a>
+          </div>
+        </div>
+
+        <div>
+          <div class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Evidence & Oversight</div>
+          <div class="space-y-1">
+            <a href="#/verification" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded font-medium transition-colors" data-route="verification">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+              <span>7. Document Verification</span>
+            </a>
+            <a href="#/compliance" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded font-medium transition-colors" data-route="compliance">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              <span>8. Regulatory Compliance</span>
+            </a>
+            <a href="#/complaints" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded font-medium transition-colors" data-route="complaints">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+              <span>9. Complaints & Grievances</span>
+            </a>
+            <a href="#/coordination" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded font-medium transition-colors" data-route="coordination">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+              <span>10. Cross-Bureau Coordination</span>
+            </a>
+            <a href="#/tasks" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded font-medium transition-colors" data-route="tasks">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+              <span>11. Tasks & Escalations</span>
+            </a>
+          </div>
+        </div>
+
+        <div>
+          <div class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Graph & AI Intelligence</div>
+          <div class="space-y-1">
+            <a href="#/graph" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded font-medium transition-colors" data-route="graph">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+              <span>12. Regulatory Graph</span>
+            </a>
+            <a href="#/copilot" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded font-medium transition-colors" data-route="copilot">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+              <span>13. AI Governance Copilot</span>
+            </a>
+          </div>
+        </div>
+
+        <div>
+          <div class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Assurance & Admin</div>
+          <div class="space-y-1">
+            <a href="#/reports" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded font-medium transition-colors" data-route="reports">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+              <span>14. Reports & Analytics</span>
+            </a>
+            <a href="#/notifications" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded font-medium transition-colors" data-route="notifications">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+              <span>15. Notification Center</span>
+            </a>
+            <a href="#/audit" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded font-medium transition-colors" data-route="audit">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              <span>16. Audit Trail</span>
+            </a>
+            <a href="#/settings" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded font-medium transition-colors" data-route="settings">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+              <span>17. Settings & RBAC</span>
+            </a>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Sidebar Footer -->
+      <div class="p-4 border-t border-navy-800 bg-navy-950/60 text-[11px] text-slate-400">
+        <div class="flex items-center justify-between mb-1">
+          <span class="font-semibold text-slate-300">Environment</span>
+          <span class="badge badge-success text-[10px]">APH 2024-27</span>
+        </div>
+        <div class="text-[10px] text-slate-500">Evidence-Based Governance</div>
+      </div>
+    </aside>
+
+    <!-- Main Workspace Container -->
+    <div class="flex-1 flex flex-col min-w-0 ml-64">
+      <!-- Top Persistent Navigation Header -->
+      <header class="h-16 bg-white border-b border-slate-200 sticky top-1 z-30 flex items-center justify-between px-6 shadow-sm">
+        <div class="flex items-center gap-4 flex-1 max-w-xl">
+          <button class="md:hidden text-slate-600 hover:text-navy-900" onclick="App.toggleSidebar()">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+          </button>
+          
+          <!-- Real-Time Global Search Bar -->
+          <div class="relative w-full">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+            <input type="text" id="global-search-input" class="w-full pl-9 pr-4 py-1.5 text-xs rounded border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:border-navy-900 focus:ring-1 focus:ring-navy-900" placeholder="Search institution permanent ID (1-XXXX), name, or application number...">
+            <!-- Autocomplete Results Box -->
+            <div id="global-search-results" class="hidden absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-md shadow-xl max-h-80 overflow-y-auto z-50"></div>
+          </div>
+        </div>
+
+        <!-- Top Right Actions & Role Pill -->
+        <div class="flex items-center gap-4">
+          <!-- Backend Connection Pill -->
+          <div id="backend-status-pill" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800">
+            <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+            Detecting...
+          </div>
+
+          <!-- Notification Bell -->
+          <button class="relative p-2 text-slate-600 hover:text-navy-900 rounded-full hover:bg-slate-100 transition-colors" onclick="App.navigate('notifications')" title="Notifications">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+            <span id="notification-badge" class="hidden absolute top-1 right-1 bg-red-600 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">0</span>
+          </button>
+
+          <!-- Current Persona / Role Pill -->
+          <div class="flex items-center gap-2 pl-3 border-l border-slate-200 cursor-pointer" onclick="App.navigate('settings')" title="Click to switch persona">
+            <div class="w-8 h-8 rounded-full bg-navy-900 text-white flex items-center justify-center font-bold text-xs font-mono">
+              AO
+            </div>
+            <div class="hidden sm:block text-left">
+              <div id="header-role-name" class="text-xs font-bold text-navy-900 leading-tight">Admin Officer</div>
+              <div id="header-role-email" class="text-[10px] text-slate-500 font-mono">admin@aicte-india.org</div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Module Body Host -->
+      <main id="main-content" class="flex-1 p-6 max-w-7xl w-full mx-auto">
+        <div class="flex justify-center items-center py-20">
+          <div class="spinner"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Reusable Accessible Modal Dialog Host -->
+  <div id="modal-backdrop" class="hidden fixed inset-0 bg-navy-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col border border-slate-200 animate-fade-in" onclick="event.stopPropagation()">
+      <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+        <h3 id="modal-title" class="text-base font-bold text-navy-900">Modal Title</h3>
+        <button class="text-slate-400 hover:text-slate-600 text-xl font-bold" onclick="App.closeModal()">&times;</button>
+      </div>
+      <div id="modal-body" class="px-6 py-4 overflow-y-auto flex-1 text-sm text-slate-700"></div>
+      <div id="modal-footer" class="px-6 py-3 border-t border-slate-200 flex justify-end gap-2 bg-slate-50 rounded-b-lg"></div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Stack Host -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 flex flex-col items-end"></div>
+
+  <!-- Core Scripts -->
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/utils/api.js"></script>
+  <script src="assets/js/utils/csv.js"></script>
+
+  <!-- Modules 1 to 17 -->
+  <script src="assets/js/modules/overview.js"></script>
+  <script src="assets/js/modules/institutions.js"></script>
+  <script src="assets/js/modules/digitalTwin.js"></script>
+  <script src="assets/js/modules/applications.js"></script>
+  <script src="assets/js/modules/scrutiny.js"></script>
+  <script src="assets/js/modules/evc.js"></script>
+  <script src="assets/js/modules/verification.js"></script>
+  <script src="assets/js/modules/compliance.js"></script>
+  <script src="assets/js/modules/complaints.js"></script>
+  <script src="assets/js/modules/coordination.js"></script>
+  <script src="assets/js/modules/tasks.js"></script>
+  <script src="assets/js/modules/graph.js"></script>
+  <script src="assets/js/modules/copilot.js"></script>
+  <script src="assets/js/modules/reports.js"></script>
+  <script src="assets/js/modules/notifications.js"></script>
+  <script src="assets/js/modules/audit.js"></script>
+  <script src="assets/js/modules/settings.js"></script>
+
+  <!-- App Bootstrap -->
+  <script src="assets/js/app.js"></script>
 </body>
 </html>

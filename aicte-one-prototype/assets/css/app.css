@@ -157,14 +157,15 @@ button {
 }
 
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.09);
   color: #ffffff;
 }
 
+.nav-item.nav-active,
 .nav-item.active {
-  background: rgba(37, 99, 235, 0.25);
-  color: #ffffff;
-  font-weight: 600;
+  background: rgba(37, 99, 235, 0.35) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
   box-shadow: inset 3px 0 0 #3b82f6;
 }
 
@@ -1094,5 +1095,91 @@ textarea.form-control {
   .panel {
     border: 1px solid #000 !important;
     box-shadow: none !important;
+  }
+}
+
+/* Enhanced Form Controls & Modal Elements */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+.form-grid .form-group.full {
+  grid-column: span 2;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.form-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.form-control, .input, .select {
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 12.5px;
+  background-color: #ffffff;
+  color: #0f172a;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  width: 100%;
+}
+.form-control:focus, .input:focus, .select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.badge-success {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+.badge-warning {
+  background-color: #fef3c7;
+  color: #b45309;
+}
+.badge-danger {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+.badge-info {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+/* Spinner */
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Mobile Sidebar */
+@media (max-width: 768px) {
+  .sidebar.mobile-open {
+    transform: translateX(0) !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5) !important;
   }
 }
