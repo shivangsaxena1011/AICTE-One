@@ -4,7 +4,7 @@ Tasks & Action Queue Router
 import uuid
 from typing import Optional
 from datetime import date, datetime
-from fastapi import APIRouter, Depends, HTTPException, Query, Form
+from fastapi import APIRouter, Depends, HTTPException, Query, Form, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
@@ -87,49 +87,99 @@ def create_task(payload: TaskCreate, db: Session = Depends(get_db)):
     return {"message": "Task created successfully", "task_id": task.id}
 
 @router.post("/{id}/status")
-def update_task_status(id: str, status: str = Form(...), notes: Optional[str] = Form(None), actor: str = Form("Officer"), db: Session = Depends(get_db)):
+async def update_task_status(
+    id: str,
+    request: Request,
+    status: Optional[str] = Form(None),
+    notes: Optional[str] = Form(None),
+    actor: Optional[str] = Form("Officer"),
+    db: Session = Depends(get_db)
+):
     task = db.query(Task).filter(Task.id == id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
 
+    content_type = request.headers.get("content-type", "")
+    req_status = status
+    req_notes = notes
+    req_actor = actor
+
+    if "application/json" in content_type:
+        try:
+            body = await request.json()
+            if isinstance(body, dict):
+                req_status = body.get("status") or req_status
+                req_notes = body.get("resolution_notes") or body.get("notes") or req_notes
+                req_actor = body.get("actor") or req_actor
+        except Exception:
+            pass
+
+    if not req_status:
+        req_status = "In Progress"
+
     old_status = task.status
-    task.status = status
-    if notes:
-        task.resolution_notes = f"{task.resolution_notes or ''}\n[{status}: {notes}]"
+    task.status = req_status
+    if req_notes:
+        task.resolution_notes = f"{task.resolution_notes or ''}\n[{req_status}: {req_notes}]"
 
     audit = AuditLog(
         id=f"AUD-{uuid.uuid4().hex[:6].upper()}",
-        actor=actor,
+        actor=req_actor,
         role="Assigned Officer",
         action="Updated Task Status",
         entity_type="Task",
         entity_id=task.id,
-        details=f"Updated status from '{old_status}' to '{status}'."
+        details=f"Updated status from '{old_status}' to '{req_status}'."
     )
     db.add(audit)
     db.commit()
-    return {"message": f"Task status updated to {status}"}
+    return {"message": f"Task status updated to {req_status}"}
 
 @router.post("/{id}/escalate")
-def escalate_task(id: str, reason: str = Form(...), escalated_to: str = Form("Bureau Head"), actor: str = Form("Officer"), db: Session = Depends(get_db)):
+async def escalate_task(
+    id: str,
+    request: Request,
+    reason: Optional[str] = Form(None),
+    escalated_to: Optional[str] = Form("Bureau Head"),
+    actor: Optional[str] = Form("Officer"),
+    db: Session = Depends(get_db)
+):
     task = db.query(Task).filter(Task.id == id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
 
+    content_type = request.headers.get("content-type", "")
+    req_reason = reason
+    req_escalated_to = escalated_to
+    req_actor = actor
+
+    if "application/json" in content_type:
+        try:
+            body = await request.json()
+            if isinstance(body, dict):
+                req_reason = body.get("reason") or req_reason
+                req_escalated_to = body.get("escalated_to") or req_escalated_to
+                req_actor = body.get("actor") or req_actor
+        except Exception:
+            pass
+
+    if not req_reason:
+        req_reason = "Administrative escalation triggered"
+
     task.priority = "Critical"
     task.status = "Escalated"
-    task.assigned_to = escalated_to
-    task.resolution_notes = f"{task.resolution_notes or ''}\n[Escalated to {escalated_to}: {reason}]"
+    task.assigned_to = req_escalated_to
+    task.resolution_notes = f"{task.resolution_notes or ''}\n[Escalated to {req_escalated_to}: {req_reason}]"
 
     audit = AuditLog(
         id=f"AUD-{uuid.uuid4().hex[:6].upper()}",
-        actor=actor,
+        actor=req_actor,
         role="Escalation Authority",
         action="Escalated Action Task",
         entity_type="Task",
         entity_id=task.id,
-        details=f"Escalated task {task.id} to {escalated_to}. Reason: {reason}."
+        details=f"Escalated task {task.id} to {req_escalated_to}. Reason: {req_reason}."
     )
     db.add(audit)
     db.commit()
-    return {"message": f"Task escalated to {escalated_to}"}
+    return {"message": f"Task escalated to {req_escalated_to}"}

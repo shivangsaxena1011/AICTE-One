@@ -14,6 +14,7 @@ from backend.services.copilot_service import copilot_service
 router = APIRouter(prefix="/api/copilot", tags=["AI Copilot"])
 
 @router.post("/chat", response_model=CopilotResponse)
+@router.post("/query", response_model=CopilotResponse)
 def copilot_chat(payload: CopilotQuery, db: Session = Depends(get_db)):
     # Build complete active context from stored records
     institutions = db.query(Institution).all()

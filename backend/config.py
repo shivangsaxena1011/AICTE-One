@@ -10,7 +10,8 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     
     # Database
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./aicte_one.db")
+    default_db: str = "sqlite:////tmp/aicte_one.db" if os.getenv("VERCEL") == "1" else "sqlite:///./aicte_one.db"
+    DATABASE_URL: str = os.getenv("DATABASE_URL", default_db)
     
     # External integrations & AI
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")

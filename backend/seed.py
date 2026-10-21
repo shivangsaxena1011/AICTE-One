@@ -30,7 +30,8 @@ def seed_database(session=None):
 
     json_path = os.path.join(os.path.dirname(__file__), "..", "data", "seed_records.json")
     if not os.path.exists(json_path):
-        db.close()
+        if close_when_done:
+            db.close()
         return
 
     with open(json_path, "r", encoding="utf-8") as f:

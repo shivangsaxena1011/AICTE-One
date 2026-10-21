@@ -96,10 +96,12 @@ def list_institutions(
         "page": page,
         "limit": limit,
         "pages": (total + limit - 1) // limit,
-        "data": data
+        "data": data,
+        "items": data
     }
 
 @router.get("/{id}")
+@router.get("/{id}/twin")
 def get_institution_digital_twin(id: str, db: Session = Depends(get_db)):
     """
     Returns full Institution Digital Twin with all connected records.
@@ -260,6 +262,16 @@ async def import_institutions_csv(file: UploadFile = File(...), db: Session = De
             skipped += 1
             continue
 
+        try:
+            programmes_count = int(row.get("Programmes") or row.get("programmes_count") or 0)
+        except (ValueError, TypeError):
+            programmes_count = 0
+
+        try:
+            total_intake = int(row.get("Intake") or row.get("total_intake") or 0)
+        except (ValueError, TypeError):
+            total_intake = 0
+
         new_inst = Institution(
             id=f"INST-{uuid.uuid4().hex[:6].upper()}",
             name=name,
@@ -274,8 +286,8 @@ async def import_institutions_csv(file: UploadFile = File(...), db: Session = De
             website=(row.get("Website") or row.get("website") or "").strip(),
             approval_status=(row.get("Status") or row.get("approval_status") or "Approved").strip(),
             approval_period=(row.get("Approval Period") or row.get("approval_period") or "2026-2027").strip(),
-            programmes_count=int(row.get("Programmes") or row.get("programmes_count") or 0),
-            total_intake=int(row.get("Intake") or row.get("total_intake") or 0),
+            programmes_count=programmes_count,
+            total_intake=total_intake,
             data_source="CSV Import",
             verified_status="Imported / Unverified",
             last_verified=date.today()

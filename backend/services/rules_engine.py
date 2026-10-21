@@ -92,7 +92,7 @@ class RulesEngine:
         Determines missing mandatory documents and application deficiencies.
         """
         required = cls.MANDATORY_DOCS.get(application_type, cls.MANDATORY_DOCS["Extension of Approval (EoA)"])
-        submitted_types = [doc.get("document_type") for doc in submitted_documents]
+        submitted_types = [(doc.get("document_type") or "") for doc in submitted_documents]
 
         missing = []
         for req in required:

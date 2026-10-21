@@ -616,21 +616,13 @@ const App = {
       return;
     }
 
-    const inst = localStore.db.institutions.find(i => i.id === instId);
-    const newComp = {
-      id: "CMP-" + Math.floor(10000 + Math.random() * 90000),
+    const newComp = await API.createCompliance({
       institution_id: instId,
-      institution_name: inst ? inst.name : "Institution",
       title,
       category: cat,
       due_date: due,
-      status: "Due soon",
-      evidence_reference: "Awaiting submission"
-    };
-
-    localStore.db.compliance.unshift(newComp);
-    localStore.log("Compliance Officer", "Policy Bureau", "Registered Obligation", "Compliance", newComp.id, `Created obligation '${title}' for ${newComp.institution_name}.`);
-    localStore.save();
+      status: "Upcoming"
+    });
 
     this.closeModal();
     this.toast(`Compliance obligation ${newComp.id} registered.`, 'success');
@@ -648,31 +640,13 @@ const App = {
       return;
     }
 
-    const inst = localStore.db.institutions.find(i => i.id === instId);
-    const prefix = bureau === 'PGRC' ? 'PGRC-26-' : 'RB-26-';
-    const newCase = {
-      id: prefix + Math.floor(10000 + Math.random() * 90000),
+    const newCase = await API.createComplaint({
       institution_id: instId,
-      institution_name: inst ? inst.name : "Institution",
       bureau,
       category: cat,
       summary,
-      lodged_date: new Date().toISOString().slice(0, 10),
-      due_date: "2026-11-20",
-      status: "Under process",
-      assigned_to: "Grievance Officer",
-      related_case_id: null
-    };
-
-    // Auto-detect overlap if another case exists for the same institution
-    const otherCase = localStore.db.complaints.find(c => c.institution_id === instId);
-    if (otherCase) {
-      newCase.related_case_id = otherCase.id;
-    }
-
-    localStore.db.complaints.unshift(newCase);
-    localStore.log("Grievance Officer", "Grievance Cell", "Registered Complaint Case", "Complaint", newCase.id, `Registered case for ${newCase.institution_name} in ${bureau}.`);
-    localStore.save();
+      due_date: "2026-11-20"
+    });
 
     this.closeModal();
     this.toast(`Grievance ${newCase.id} registered successfully.`, 'success');

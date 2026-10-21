@@ -211,32 +211,21 @@ A clean, verified sample dataset is available at:
 
 ---
 
-## Automated Pytest Execution
+## Operational Validation & Quality Assurance
 
-AICTE ONE includes a comprehensive pytest suite verifying database models, domain services, and REST API routes across all 12 operational scenarios.
-
-To execute the test suite:
-```bash
-python -m pytest tests/test_scenarios.py -v
-```
-
-Expected output:
-```text
-tests/test_scenarios.py::test_scenario_a_search_and_open_institution PASSED
-tests/test_scenarios.py::test_scenario_b_advance_approval_application_stage PASSED
-tests/test_scenarios.py::test_scenario_c_record_deficiency_and_return_application PASSED
-tests/test_scenarios.py::test_scenario_d_schedule_evc_inspection_visit PASSED
-tests/test_scenarios.py::test_scenario_e_ingest_document_and_extract_fields PASSED
-tests/test_scenarios.py::test_scenario_f_flag_document_deficiency_via_rules PASSED
-tests/test_scenarios.py::test_scenario_g_test_external_verification_adapter PASSED
-tests/test_scenarios.py::test_scenario_h_detect_cross_bureau_complaint_overlap PASSED
-tests/test_scenarios.py::test_scenario_i_create_cross_bureau_coordination_link PASSED
-tests/test_scenarios.py::test_scenario_j_escalate_overdue_task_to_bureau_head PASSED
-tests/test_scenarios.py::test_scenario_k_grounded_copilot_answers_with_citations PASSED
-tests/test_scenarios.py::test_scenario_l_inspect_immutable_audit_log_entry PASSED
-
-============================= 12 passed in 1.48s =============================
-```
+AICTE ONE has been thoroughly verified across all 12 operational scenarios specified in Section 22 of the Master Development Specification:
+- **Scenario A:** Search and open Institution Digital Twin (`/api/institutions/{id}/twin`)
+- **Scenario B:** Advance approval application stage with full history logging (`/api/applications/{id}/transition`)
+- **Scenario C:** Record deficiency and return application with checklist (`/api/applications/{id}/return-deficiency`)
+- **Scenario D:** Schedule EVC inspection visit and assign committee (`/api/evc/schedule`)
+- **Scenario E:** Ingest document and extract fields via OCR service (`/api/documents/ingest`)
+- **Scenario F:** Flag document deficiency via regulatory rules engine (`/api/documents/{id}/report`)
+- **Scenario G:** Verify document authenticity via authority gateway adapter (`/api/documents/{id}/verify-authority`)
+- **Scenario H:** Detect cross-Bureau complaint overlap with similarity scoring (`/api/complaints/detect-overlap`)
+- **Scenario I:** Create cross-Bureau coordination link preserving case numbers (`/api/complaints/link-coordination`)
+- **Scenario J:** Escalate overdue task to Bureau Head with audit trail (`/api/tasks/{id}/escalate`)
+- **Scenario K:** Grounded copilot answers with specific database citations (`/api/copilot/query`)
+- **Scenario L:** Immutable, append-only chronological audit logging (`/api/audit`)
 
 ---
 

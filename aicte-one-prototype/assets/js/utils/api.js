@@ -324,6 +324,118 @@ const API = {
     return { success: true, current_stage: stage, status };
   },
 
+  // 3b. EVC Scheduling
+  async getEvcSchedules(params = {}) {
+    if (this.isBackendLive) {
+      try {
+        const cleanParams = {};
+        Object.keys(params).forEach(k => {
+          if (params[k] !== undefined && params[k] !== null && params[k] !== "") {
+            cleanParams[k] = params[k];
+          }
+        });
+        const qs = new URLSearchParams(cleanParams).toString();
+        const res = await fetch(`${this.baseUrl}/evc?${qs}`, { headers: this.getHeaders() });
+        if (res.ok) {
+          const list = await res.json();
+          return this.wrapCollection(list);
+        }
+      } catch (e) { console.warn("API fallback:", e); }
+    }
+    return this.wrapCollection(localStore.db.evc_schedules);
+  },
+
+  async scheduleEvc(data) {
+    if (this.isBackendLive) {
+      try {
+        const res = await fetch(`${this.baseUrl}/evc/schedule`, {
+          method: "POST",
+          headers: this.getHeaders(),
+          body: JSON.stringify(data)
+        });
+        if (res.ok) return await res.json();
+      } catch (e) { console.warn("API fallback:", e); }
+    }
+    const app = localStore.db.applications.find(a => a.id === data.application_id);
+    const inst = localStore.db.institutions.find(i => i.id === data.institution_id || (app && a.institution_id === i.id));
+    const newSchedule = {
+      id: "EVC-2026-" + Math.floor(1000 + Math.random() * 9000),
+      application_id: data.application_id,
+      institution_id: inst ? inst.id : data.institution_id,
+      institution_name: inst ? inst.name : "Institution",
+      visit_type: data.visit_type || "Physical Visit",
+      scheduled_date: data.scheduled_date,
+      status: "Scheduled",
+      committee_chair: data.committee_chair,
+      committee_members: data.committee_members || "",
+      report_submitted: false,
+      remarks: data.remarks || "Committee constituted and date notified."
+    };
+    localStore.db.evc_schedules.unshift(newSchedule);
+    if (app) {
+      app.current_stage = "EVC scheduling";
+      app.status = "EVC scheduled";
+      app.last_action = `EVC visit scheduled on ${data.scheduled_date} by ${data.committee_chair}`;
+      app.next_action = "Conduct on-site inspection and submit visit report";
+    }
+    localStore.log(data.committee_chair, "EVC Coordinator", "Scheduled EVC Visit", "EVC", newSchedule.id, `Scheduled visit for Application ${data.application_id}.`);
+    localStore.save();
+    return newSchedule;
+  },
+
+  async rescheduleEvc(id, newDate, reason) {
+    if (this.isBackendLive) {
+      try {
+        const res = await fetch(`${this.baseUrl}/evc/${id}/reschedule`, {
+          method: "POST",
+          headers: this.getHeaders(),
+          body: JSON.stringify({ new_date: newDate, reason })
+        });
+        if (res.ok) return await res.json();
+      } catch (e) { console.warn("API fallback:", e); }
+    }
+    const s = localStore.db.evc_schedules.find(x => x.id === id);
+    if (s) {
+      const old = s.scheduled_date;
+      s.scheduled_date = newDate;
+      s.remarks = `Rescheduled from ${old} to ${newDate}. Reason: ${reason}`;
+      localStore.log("EVC Coordinator", "Regional Office", "Rescheduled EVC Visit", "EVC", s.id, s.remarks);
+      localStore.save();
+    }
+    return { success: true };
+  },
+
+  async completeEvc(id, observations, recommendation) {
+    if (this.isBackendLive) {
+      try {
+        const res = await fetch(`${this.baseUrl}/evc/${id}/complete`, {
+          method: "POST",
+          headers: this.getHeaders(),
+          body: JSON.stringify({ observations, remarks: `Recommendation: ${recommendation}` })
+        });
+        if (res.ok) return await res.json();
+      } catch (e) { console.warn("API fallback:", e); }
+    }
+    const s = localStore.db.evc_schedules.find(x => x.id === id);
+    if (s) {
+      s.status = "Completed";
+      s.report_submitted = true;
+      s.observations = observations;
+      s.remarks = `Recommendation: ${recommendation}`;
+      const app = localStore.db.applications.find(a => a.id === s.application_id);
+      if (app) {
+        app.current_stage = "EVC completed";
+        app.status = "In review";
+        app.progress = 80;
+        app.last_action = `EVC report filed: ${recommendation}`;
+        app.next_action = "Appraisal by Standing Appellate Committee (SAC)";
+      }
+      localStore.log(s.committee_chair, "EVC Committee", "Completed EVC Inspection", "EVC", s.id, `Report filed with recommendation: ${recommendation}`);
+      localStore.save();
+    }
+    return { success: true };
+  },
+
   // 4. Documents & OCR
   async getDocuments(params = {}) {
     if (this.isBackendLive) {
@@ -417,6 +529,36 @@ const API = {
     return this.wrapCollection(localStore.db.compliance);
   },
 
+  async createCompliance(data) {
+    if (this.isBackendLive) {
+      try {
+        const res = await fetch(`${this.baseUrl}/compliance`, {
+          method: "POST",
+          headers: this.getHeaders(),
+          body: JSON.stringify(data)
+        });
+        if (res.ok) return await res.json();
+      } catch (e) { console.warn("API fallback:", e); }
+    }
+    const inst = localStore.db.institutions.find(i => i.id === data.institution_id || i.permanent_id === data.institution_id);
+    const newComp = {
+      id: "CMP-" + Math.floor(10000 + Math.random() * 90000),
+      institution_id: inst ? inst.id : data.institution_id,
+      institution_name: inst ? inst.name : "Institution",
+      title: data.title,
+      category: data.category || "Time-bound undertaking",
+      due_date: data.due_date || "2026-11-15",
+      responsible_party: data.responsible_party || "Institution",
+      status: "Upcoming",
+      evidence_file: data.evidence_file || "—",
+      review_notes: data.review_notes || "Statutory obligation lodged."
+    };
+    localStore.db.compliance.unshift(newComp);
+    localStore.log("Compliance Officer", "Compliance Division", "Created Compliance Obligation", "Compliance", newComp.id, `Created obligation '${newComp.title}' for ${newComp.institution_name}.`);
+    localStore.save();
+    return newComp;
+  },
+
   // 6. Complaints & Coordination
   async getComplaints(params = {}) {
     if (this.isBackendLive) {
@@ -436,6 +578,87 @@ const API = {
       } catch (e) { console.warn("API fallback:", e); }
     }
     return this.wrapCollection(localStore.db.complaints);
+  },
+
+  async createComplaint(data) {
+    if (this.isBackendLive) {
+      try {
+        const res = await fetch(`${this.baseUrl}/complaints`, {
+          method: "POST",
+          headers: this.getHeaders(),
+          body: JSON.stringify(data)
+        });
+        if (res.ok) return await res.json();
+      } catch (e) { console.warn("API fallback:", e); }
+    }
+    const inst = localStore.db.institutions.find(i => i.id === data.institution_id || i.permanent_id === data.institution_id);
+    const newCase = {
+      id: "CASE-" + Math.floor(1000 + Math.random() * 9000),
+      institution_id: inst ? inst.id : data.institution_id,
+      institution_name: inst ? inst.name : "Institution",
+      bureau: data.bureau || "PGRC",
+      category: data.category || "Intake discrepancy",
+      summary: data.summary,
+      channel: data.channel || "Online Portal",
+      status: "Received",
+      assigned_to: data.assigned_to || "Unassigned",
+      received_date: new Date().toISOString().slice(0, 10),
+      due_date: data.due_date || "2026-11-15",
+      related_case_id: "",
+      overlap_score: 0
+    };
+    const otherCase = localStore.db.complaints.find(c => c.institution_id === newCase.institution_id && c.id !== newCase.id);
+    if (otherCase) {
+      newCase.related_case_id = otherCase.id;
+      newCase.overlap_score = 90;
+      newCase.overlap_reason = `Exact Institution correlation; overlapping administrative enquiry.`;
+    }
+    localStore.db.complaints.unshift(newCase);
+    localStore.log(newCase.assigned_to, "Grievance Officer", "Registered Complaint Case", "Complaint", newCase.id, `Registered case for ${newCase.institution_name} in ${newCase.bureau}.`);
+    localStore.save();
+    return newCase;
+  },
+
+  async transferComplaint(id, newBureau, reason, actor = "Grievance Officer") {
+    if (this.isBackendLive) {
+      try {
+        const res = await fetch(`${this.baseUrl}/complaints/${id}/transfer`, {
+          method: "POST",
+          headers: this.getHeaders(),
+          body: JSON.stringify({ new_bureau: newBureau, reason, actor })
+        });
+        if (res.ok) return await res.json();
+      } catch (e) { console.warn("API fallback:", e); }
+    }
+    const c = localStore.db.complaints.find(x => x.id === id);
+    if (c) {
+      c.bureau = newBureau;
+      c.status = "Transferred";
+      localStore.log(actor, "Grievance Cell", "Transferred Complaint", "Complaint", c.id, `Transferred to ${newBureau}. Reason: ${reason}`);
+      localStore.save();
+    }
+    return { success: true };
+  },
+
+  async disposeComplaint(id, resolutionNotes, actor = "Disposal Officer") {
+    if (this.isBackendLive) {
+      try {
+        const res = await fetch(`${this.baseUrl}/complaints/${id}/dispose`, {
+          method: "POST",
+          headers: this.getHeaders(),
+          body: JSON.stringify({ resolution_notes: resolutionNotes, actor })
+        });
+        if (res.ok) return await res.json();
+      } catch (e) { console.warn("API fallback:", e); }
+    }
+    const c = localStore.db.complaints.find(x => x.id === id);
+    if (c) {
+      c.status = "Disposed or closed";
+      c.resolution_notes = resolutionNotes;
+      localStore.log(actor, "Disposal Authority", "Disposed Complaint Case", "Complaint", c.id, `Closed with: ${resolutionNotes.slice(0, 60)}...`);
+      localStore.save();
+    }
+    return { success: true };
   },
 
   async linkCoordination(caseAId, caseBId, rationale, actor = "Central Administration Officer") {

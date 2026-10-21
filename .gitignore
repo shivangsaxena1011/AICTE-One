@@ -23,7 +23,9 @@ test_aicte.db
 .env
 
 # Archives
+*.zip
 AICTE_ONE_Working_Prototype.zip
+AICTE_ONE_Production_Platform.zip
 
 # OS files
 .DS_Store

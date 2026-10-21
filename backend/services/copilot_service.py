@@ -38,24 +38,25 @@ class CopilotService:
             target_inst = institutions[0]
 
         # Scenario 1: Why was an application flagged?
-        if any(w in q for w in ["flag", "deficiency", "returned", "why was", "block", "issue"]):
+        if any(w in q for w in ["flag", "deficiency", "returned", "why was", "block", "issue"]) and applications:
             target_app = None
             for app in applications:
                 if app["id"].lower() in q:
                     target_app = app
                     break
-            if not target_app:
+            if not target_app and applications:
                 target_app = applications[0]
 
-            linked_docs = [d for d in documents if d.get("application_id") == target_app["id"] or d.get("institution_id") == target_app.get("institution_id")]
+            linked_docs = [d for d in documents if target_app and (d.get("application_id") == target_app["id"] or d.get("institution_id") == target_app.get("institution_id"))]
             deficiencies = [d for d in linked_docs if d.get("status") in ["Mismatch detected", "Expired according to source", "Expiry detected", "Verification pending"]]
             
-            citations.append({
-                "record_id": target_app["id"],
-                "record_type": "Application",
-                "title": f"{target_app['type']} ({target_app['current_stage']})",
-                "status": target_app["status"]
-            })
+            if target_app:
+                citations.append({
+                    "record_id": target_app["id"],
+                    "record_type": "Application",
+                    "title": f"{target_app['type']} ({target_app['current_stage']})",
+                    "status": target_app["status"]
+                })
             for d in deficiencies:
                 citations.append({
                     "record_id": d["id"],
@@ -64,7 +65,8 @@ class CopilotService:
                     "status": d["status"]
                 })
 
-            facts.append(f"Application {target_app['id']} for '{target_app.get('institution_name', 'Institution')}' is currently at stage '{target_app['current_stage']}' with status '{target_app['status']}'.")
+            if target_app:
+                facts.append(f"Application {target_app['id']} for '{target_app.get('institution_name', 'Institution')}' is currently at stage '{target_app['current_stage']}' with status '{target_app['status']}'.")
             facts.append(f"Total documents attached: {len(linked_docs)}, of which {len(deficiencies)} require officer review.")
 
             for d in deficiencies:

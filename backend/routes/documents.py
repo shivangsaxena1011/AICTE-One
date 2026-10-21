@@ -5,7 +5,7 @@ import json
 import uuid
 from typing import Optional, List, Dict, Any
 from datetime import date, datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form, Request
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
@@ -68,25 +68,58 @@ def list_documents(
     return results
 
 @router.post("/upload")
+@router.post("/ingest")
 async def upload_document(
-    institution_id: str = Form(...),
+    request: Request,
+    institution_id: Optional[str] = Form(None),
     application_id: Optional[str] = Form(None),
-    document_type: str = Form(...),
+    document_type: Optional[str] = Form(None),
     authority_ref: Optional[str] = Form(None),
     file: Optional[UploadFile] = File(None),
     filename: Optional[str] = Form(None),
     db: Session = Depends(get_db)
 ):
-    inst = db.query(Institution).filter(Institution.id == institution_id).first()
+    content_type = request.headers.get("content-type", "")
+    req_inst_id = institution_id
+    req_app_id = application_id
+    req_doc_type = document_type
+    req_auth_ref = authority_ref
+    fname = filename or "Document.pdf"
+    file_bytes = b""
+
+    if "application/json" in content_type:
+        try:
+            body = await request.json()
+            if isinstance(body, dict):
+                req_inst_id = body.get("institution_id") or req_inst_id
+                req_app_id = body.get("application_id") or req_app_id
+                req_doc_type = body.get("document_type") or req_doc_type
+                req_auth_ref = body.get("authority_ref") or req_auth_ref
+                fname = body.get("name") or body.get("filename") or fname
+                if body.get("file_base64"):
+                    import base64
+                    try:
+                        file_bytes = base64.b64decode(body["file_base64"])
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+
+    if not req_inst_id:
+        raise HTTPException(status_code=400, detail="institution_id is required")
+    if not req_doc_type:
+        req_doc_type = "Institutional Certificate"
+
+    inst = db.query(Institution).filter(Institution.id == req_inst_id).first()
     if not inst:
         raise HTTPException(status_code=404, detail="Institution not found")
 
-    file_bytes = b""
-    fname = filename or "Document.pdf"
     file_size = 0
     if file:
         file_bytes = await file.read()
         fname = file.filename
+        file_size = len(file_bytes)
+    elif file_bytes:
         file_size = len(file_bytes)
 
     file_hash = ocr_service.calculate_sha256(file_bytes) if file_bytes else f"SHA-{uuid.uuid4().hex[:16]}"
@@ -94,14 +127,14 @@ async def upload_document(
     # 1. OCR Extraction
     ocr_result = ocr_service.extract_document_fields(
         filename=fname,
-        doc_type=document_type,
+        doc_type=req_doc_type,
         institution_name=inst.name,
         permanent_id=inst.permanent_id,
         content=file_bytes
     )
 
-    if authority_ref:
-        ocr_result["authority_ref"] = authority_ref
+    if req_auth_ref:
+        ocr_result["authority_ref"] = req_auth_ref
 
     # 2. Regulatory Rules Engine Check
     doc_dict = {
@@ -121,10 +154,10 @@ async def upload_document(
     new_id = f"DOC-{uuid.uuid4().hex[:4].upper()}"
     doc = Document(
         id=new_id,
-        institution_id=institution_id,
-        application_id=application_id,
+        institution_id=req_inst_id,
+        application_id=req_app_id,
         name=fname,
-        document_type=document_type,
+        document_type=req_doc_type,
         file_size=file_size,
         file_hash=file_hash,
         uploaded_at=date.today(),
@@ -222,6 +255,7 @@ def correct_extracted_fields(id: str, corrections: Dict[str, Any], actor: str = 
     return {"message": "Fields updated and re-validated", "status": doc.status}
 
 @router.get("/{id}/validation-report")
+@router.get("/{id}/report")
 def get_validation_report(id: str, db: Session = Depends(get_db)):
     doc = db.query(Document).filter(Document.id == id).first()
     if not doc:

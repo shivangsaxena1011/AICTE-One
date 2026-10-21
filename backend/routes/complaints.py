@@ -4,7 +4,7 @@ Complaint Intelligence & Cross-Bureau Coordination Router
 import uuid
 from typing import Optional, List
 from datetime import date, datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, Query, Form
+from fastapi import APIRouter, Depends, HTTPException, Query, Form, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
@@ -111,6 +111,8 @@ def register_complaint(payload: ComplaintCreate, db: Session = Depends(get_db)):
     return {"message": "Complaint registered successfully", "id": cplt.id, "related_case": cplt.related_case_id}
 
 @router.get("/overlaps")
+@router.get("/detect-overlap")
+@router.post("/detect-overlap")
 def detect_case_overlaps(db: Session = Depends(get_db)):
     """
     Scans entire complaint registry and identifies potential cross-Bureau case overlaps.
@@ -166,34 +168,62 @@ def confirm_coordination_link(payload: CoordinationLinkCreate, actor: str = "Cen
     return {"message": "Case coordination confirmed; independent case histories preserved.", "link_id": link.id}
 
 @router.post("/{id}/transfer")
-def transfer_complaint(id: str, new_bureau: str = Form(...), reason: str = Form(...), actor: str = Form("Grievance Officer"), db: Session = Depends(get_db)):
+async def transfer_complaint(
+    id: str,
+    request: Request,
+    new_bureau: Optional[str] = Form(None),
+    reason: Optional[str] = Form(None),
+    actor: Optional[str] = Form("Grievance Officer"),
+    db: Session = Depends(get_db)
+):
     cplt = db.query(Complaint).filter(Complaint.id == id).first()
     if not cplt:
         raise HTTPException(status_code=404, detail="Complaint not found")
 
+    content_type = request.headers.get("content-type", "")
+    req_bureau = new_bureau
+    req_reason = reason
+    req_actor = actor
+
+    if "application/json" in content_type:
+        try:
+            body = await request.json()
+            if isinstance(body, dict):
+                req_bureau = body.get("new_bureau") or body.get("bureau") or req_bureau
+                req_reason = body.get("reason") or body.get("transfer_reason") or req_reason
+                req_actor = body.get("actor") or req_actor
+        except Exception:
+            pass
+
+    if not req_bureau:
+        raise HTTPException(status_code=400, detail="Target bureau is required")
+    if not req_reason:
+        req_reason = "Administrative reassignment"
+
     old_bureau = cplt.bureau
-    cplt.bureau = new_bureau
+    cplt.bureau = req_bureau
     cplt.status = "Transferred"
-    cplt.details = f"{cplt.details or ''}\n[Transferred from {old_bureau} to {new_bureau}: {reason}]"
+    cplt.details = f"{cplt.details or ''}\n[Transferred from {old_bureau} to {req_bureau}: {req_reason}]"
 
     audit = AuditLog(
         id=f"AUD-{uuid.uuid4().hex[:6].upper()}",
-        actor=actor,
+        actor=req_actor,
         role="Grievance Cell",
         action="Transferred Complaint Case",
         entity_type="Complaint",
         entity_id=cplt.id,
-        details=f"Transferred case from {old_bureau} to {new_bureau}. Reason: {reason}."
+        details=f"Transferred case from {old_bureau} to {req_bureau}. Reason: {req_reason}."
     )
     db.add(audit)
     db.commit()
-    return {"message": f"Case transferred to {new_bureau}"}
+    return {"message": f"Case transferred to {req_bureau}"}
 
 @router.post("/{id}/dispose")
-def dispose_complaint(
+async def dispose_complaint(
     id: str,
-    resolution_notes: str = Form(...),
-    actor: str = Form("Disposal Officer"),
+    request: Request,
+    resolution_notes: Optional[str] = Form(None),
+    actor: Optional[str] = Form("Disposal Officer"),
     auth: dict = Depends(require_roles(ROLE_VIGILANCE, ROLE_ADMIN)),
     db: Session = Depends(get_db)
 ):
@@ -201,18 +231,34 @@ def dispose_complaint(
     if not cplt:
         raise HTTPException(status_code=404, detail="Complaint not found")
 
+    content_type = request.headers.get("content-type", "")
+    req_notes = resolution_notes
+    req_actor = actor
+
+    if "application/json" in content_type:
+        try:
+            body = await request.json()
+            if isinstance(body, dict):
+                req_notes = body.get("resolution_notes") or body.get("notes") or req_notes
+                req_actor = body.get("actor") or req_actor
+        except Exception:
+            pass
+
+    if not req_notes:
+        raise HTTPException(status_code=400, detail="Resolution notes are required")
+
     cplt.status = "Disposed or closed"
-    cplt.resolution_notes = resolution_notes
+    cplt.resolution_notes = req_notes
     cplt.closed_at = datetime.now(timezone.utc)
 
     audit = AuditLog(
         id=f"AUD-{uuid.uuid4().hex[:6].upper()}",
-        actor=actor,
+        actor=req_actor,
         role="Disposal Authority",
         action="Disposed Complaint Case",
         entity_type="Complaint",
         entity_id=cplt.id,
-        details=f"Case closed with resolution: {resolution_notes[:80]}..."
+        details=f"Case closed with resolution: {req_notes[:80]}..."
     )
     db.add(audit)
     db.commit()

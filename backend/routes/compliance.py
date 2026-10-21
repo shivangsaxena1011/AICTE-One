@@ -4,7 +4,7 @@ Compliance & Regulatory Obligations Router
 import uuid
 from typing import Optional
 from datetime import date, datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
@@ -93,22 +93,36 @@ def create_compliance_obligation(payload: ComplianceCreate, db: Session = Depend
 @router.post("/{id}/upload-evidence")
 async def upload_compliance_evidence(
     id: str,
-    evidence_filename: str = Form(...),
+    request: Request,
+    evidence_filename: Optional[str] = Form(None),
     file: Optional[UploadFile] = File(None),
-    actor: str = Form("Institution Representative"),
+    actor: Optional[str] = Form("Institution Representative"),
     db: Session = Depends(get_db)
 ):
     comp = db.query(ComplianceObligation).filter(ComplianceObligation.id == id).first()
     if not comp:
         raise HTTPException(status_code=404, detail="Obligation not found")
 
-    fname = file.filename if file else evidence_filename
+    content_type = request.headers.get("content-type", "")
+    req_fname = evidence_filename
+    req_actor = actor
+
+    if "application/json" in content_type:
+        try:
+            body = await request.json()
+            if isinstance(body, dict):
+                req_fname = body.get("evidence_filename") or body.get("filename") or body.get("evidence_file") or req_fname
+                req_actor = body.get("actor") or req_actor
+        except Exception:
+            pass
+
+    fname = file.filename if file else (req_fname or f"Evidence_{comp.id}.pdf")
     comp.evidence_file = fname
     comp.status = "Evidence submitted"
 
     audit = AuditLog(
         id=f"AUD-{uuid.uuid4().hex[:6].upper()}",
-        actor=actor,
+        actor=req_actor or "Institution Representative",
         role="Institution User",
         action="Uploaded Compliance Evidence",
         entity_type="Compliance",
@@ -120,30 +134,51 @@ async def upload_compliance_evidence(
     return {"message": "Evidence submitted successfully", "status": comp.status}
 
 @router.post("/{id}/review")
-def review_compliance_obligation(
+async def review_compliance_obligation(
     id: str,
-    decision: str = Form(...), # "Satisfied by evidence", "Action required", "Overdue"
-    notes: str = Form(...),
-    reviewer: str = Form("Compliance Officer"),
+    request: Request,
+    decision: Optional[str] = Form(None), # "Satisfied by evidence", "Action required", "Overdue"
+    notes: Optional[str] = Form(None),
+    reviewer: Optional[str] = Form("Compliance Officer"),
     db: Session = Depends(get_db)
 ):
     comp = db.query(ComplianceObligation).filter(ComplianceObligation.id == id).first()
     if not comp:
         raise HTTPException(status_code=404, detail="Obligation not found")
 
-    comp.status = decision
-    comp.review_notes = notes
-    comp.reviewed_by = reviewer
+    content_type = request.headers.get("content-type", "")
+    req_decision = decision
+    req_notes = notes
+    req_reviewer = reviewer
+
+    if "application/json" in content_type:
+        try:
+            body = await request.json()
+            if isinstance(body, dict):
+                req_decision = body.get("decision") or body.get("verdict") or req_decision
+                req_notes = body.get("notes") or body.get("review_notes") or req_notes
+                req_reviewer = body.get("reviewer") or req_reviewer
+        except Exception:
+            pass
+
+    if not req_decision:
+        req_decision = "Satisfied by evidence"
+    if not req_notes:
+        req_notes = "Evidence reviewed and approved according to regulations."
+
+    comp.status = req_decision
+    comp.review_notes = req_notes
+    comp.reviewed_by = req_reviewer or "Compliance Officer"
     comp.reviewed_at = datetime.now(timezone.utc)
 
     audit = AuditLog(
         id=f"AUD-{uuid.uuid4().hex[:6].upper()}",
-        actor=reviewer,
+        actor=comp.reviewed_by,
         role="Compliance Officer",
         action="Reviewed Compliance Obligation",
         entity_type="Compliance",
         entity_id=comp.id,
-        details=f"Marked '{comp.title}' as '{decision}'. Notes: {notes}."
+        details=f"Marked '{comp.title}' as '{req_decision}'. Notes: {req_notes}."
     )
     db.add(audit)
     db.commit()

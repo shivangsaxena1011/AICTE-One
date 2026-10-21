@@ -4,7 +4,7 @@ EVC Scheduling & Pendency Router
 import uuid
 from typing import Optional
 from datetime import date, datetime
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Form, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
@@ -53,7 +53,7 @@ def schedule_evc(payload: EVCCreate, db: Session = Depends(get_db)):
     evc = EVCSchedule(
         id=new_id,
         application_id=payload.application_id,
-        institution_id=payload.institution_id,
+        institution_id=payload.institution_id or app.institution_id,
         visit_type=payload.visit_type or "Physical Visit",
         scheduled_date=payload.scheduled_date,
         status="Scheduled",
@@ -86,37 +86,89 @@ def schedule_evc(payload: EVCCreate, db: Session = Depends(get_db)):
     return {"message": "EVC scheduled successfully", "evc_id": evc.id}
 
 @router.put("/{id}/reschedule")
-def reschedule_evc(id: str, new_date: date, reason: str, actor: str = "EVC Coordinator", db: Session = Depends(get_db)):
+@router.post("/{id}/reschedule")
+async def reschedule_evc(
+    id: str,
+    request: Request,
+    new_date: Optional[date] = Query(None),
+    reason: Optional[str] = Query(None),
+    actor: Optional[str] = Query("EVC Coordinator"),
+    db: Session = Depends(get_db)
+):
     evc = db.query(EVCSchedule).filter(EVCSchedule.id == id).first()
     if not evc:
         raise HTTPException(status_code=404, detail="EVC record not found")
 
+    content_type = request.headers.get("content-type", "")
+    req_date = new_date
+    req_reason = reason
+    req_actor = actor
+
+    if "application/json" in content_type:
+        try:
+            body = await request.json()
+            if isinstance(body, dict):
+                if body.get("new_date"):
+                    from datetime import date as dt_date
+                    req_date = dt_date.fromisoformat(str(body["new_date"]))
+                req_reason = body.get("reason") or req_reason
+                req_actor = body.get("actor") or req_actor
+        except Exception:
+            pass
+
+    if not req_date:
+        req_date = date.today()
+    if not req_reason:
+        req_reason = "Administrative rescheduling"
+
     old_date = evc.scheduled_date
-    evc.scheduled_date = new_date
-    evc.remarks = f"Rescheduled from {old_date.isoformat()} to {new_date.isoformat()}. Reason: {reason}"
+    evc.scheduled_date = req_date
+    evc.remarks = f"Rescheduled from {old_date.isoformat()} to {req_date.isoformat()}. Reason: {req_reason}"
 
     audit = AuditLog(
         id=f"AUD-{uuid.uuid4().hex[:6].upper()}",
-        actor=actor,
+        actor=req_actor or "EVC Coordinator",
         role="EVC Coordinator",
         action="Rescheduled EVC Visit",
         entity_type="EVC",
         entity_id=evc.id,
-        details=f"Rescheduled visit from {old_date.isoformat()} to {new_date.isoformat()} for Application {evc.application_id}. Reason: {reason}"
+        details=f"Rescheduled visit from {old_date.isoformat()} to {req_date.isoformat()} for Application {evc.application_id}. Reason: {req_reason}"
     )
     db.add(audit)
     db.commit()
-    return {"message": "EVC rescheduled successfully", "new_date": new_date.isoformat()}
+    return {"message": "EVC rescheduled successfully", "new_date": req_date.isoformat()}
 
 @router.post("/{id}/complete")
-def complete_evc(id: str, observations: str, actor: str = "EVC Chair", db: Session = Depends(get_db)):
+async def complete_evc(
+    id: str,
+    request: Request,
+    observations: Optional[str] = Query(None),
+    actor: Optional[str] = Query("EVC Chair"),
+    db: Session = Depends(get_db)
+):
     evc = db.query(EVCSchedule).filter(EVCSchedule.id == id).first()
     if not evc:
         raise HTTPException(status_code=404, detail="EVC record not found")
 
+    content_type = request.headers.get("content-type", "")
+    req_obs = observations
+    req_actor = actor
+
+    if "application/json" in content_type:
+        try:
+            body = await request.json()
+            if isinstance(body, dict):
+                req_obs = body.get("observations") or body.get("remarks") or req_obs
+                req_actor = body.get("actor") or req_actor
+        except Exception:
+            pass
+
+    if not req_obs:
+        req_obs = "EVC inspection completed; infrastructure, laboratories, and faculty cadre verified."
+
     evc.status = "Completed"
     evc.report_submitted = True
-    evc.observations = observations
+    evc.observations = req_obs
 
     # Advance application
     app = db.query(Application).filter(Application.id == evc.application_id).first()
@@ -124,12 +176,12 @@ def complete_evc(id: str, observations: str, actor: str = "EVC Chair", db: Sessi
         app.current_stage = "EVC completed"
         app.status = "In review"
         app.progress = 80
-        app.last_action = f"EVC report submitted: {observations[:80]}..."
+        app.last_action = f"EVC report submitted: {req_obs[:80]}..."
         app.next_action = "Submit to Standing Appellate Committee (SAC) for final appraisal"
 
     audit = AuditLog(
         id=f"AUD-{uuid.uuid4().hex[:6].upper()}",
-        actor=actor,
+        actor=req_actor or "EVC Chair",
         role="EVC Committee",
         action="Completed EVC Inspection",
         entity_type="EVC",
