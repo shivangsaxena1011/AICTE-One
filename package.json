@@ -1,0 +1,21 @@
+{
+  "name": "aicte-one-platform",
+  "version": "2.4.0",
+  "description": "AICTE ONE - Unified Institution Intelligence, Approval, Compliance & Document Verification Platform",
+  "main": "aicte-one-prototype/index.html",
+  "scripts": {
+    "start": "python backend/main.py",
+    "serve": "python -m http.server 3000 --directory aicte-one-prototype",
+    "test": "pytest tests/test_scenarios.py -v"
+  },
+  "keywords": [
+    "aicte",
+    "governance",
+    "institutional-intelligence",
+    "regulatory-compliance",
+    "document-verification",
+    "approval-workflow"
+  ],
+  "author": "AICTE ONE Architecture Team",
+  "license": "Proprietary"
+}

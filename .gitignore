@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# Testing & Cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Databases & local dynamic states
+*.db
+*.sqlite3
+aicte_one.db
+test_aicte.db
+
+# Environment variables
+.env
+
+# Archives
+AICTE_ONE_Working_Prototype.zip
+
+# OS files
+.DS_Store
+Thumbs.db

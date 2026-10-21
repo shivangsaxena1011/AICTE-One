@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  aicte-one-app:
+    build: .
+    container_name: aicte_one_platform
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./aicte_governance.db
+      - HOST=0.0.0.0
+      - PORT=8000
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+    volumes:
+      - aicte_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  aicte_data:
