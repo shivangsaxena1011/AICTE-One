@@ -2,7 +2,7 @@
   "version": 2,
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/index.py" },
-    { "source": "/assets/(.*)", "destination": "/aicte-one-prototype/assets/$1" },
-    { "source": "/(.*)", "destination": "/aicte-one-prototype/$1" }
+    { "source": "/assets/(.*)", "destination": "/assets/$1" },
+    { "source": "/(.*)", "destination": "/$1" }
   ]
 }

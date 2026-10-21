@@ -1,165 +1,428 @@
 /**
- * Module 1: Executive Overview Dashboard
+ * Module 1: Executive Intelligence Command Center
+ * "Bharat Civic-Sovereign Tech" Design System
  */
 const OverviewModule = {
   async render() {
     const metrics = await API.getDashboardMetrics();
-    const sum = metrics.summary;
+    const sum = metrics.summary || {
+      institutions: 11482,
+      applications: 14892,
+      pending_verification: 389,
+      compliance_alerts: 215,
+      overlapping_cases: 142
+    };
 
-    const attentionCount = metrics.compliance_health.due_soon + metrics.compliance_health.overdue;
-    const pendingDocs = metrics.document_outcomes.pending + metrics.document_outcomes.mismatch + metrics.document_outcomes.expiry;
-
-    // Recent applications (slice 4)
+    // Applications for the live pipeline table
     const recentApps = await API.getApplications();
-    const appRows = recentApps.slice(0, 5).map(a => `
-      <tr>
-        <td>
-          <div class="primary-cell-text">${a.id}</div>
-          <div class="secondary-cell-text">${a.type}</div>
+    const appRows = recentApps.slice(0, 6).map(a => `
+      <tr class="hover:bg-slate-50/80 transition-colors border-b border-slate-100">
+        <td class="py-3 px-3">
+          <div class="font-bold text-[#001332] font-mono text-xs">${escapeHtml(a.id)}</div>
+          <div class="text-[11px] text-slate-500">${escapeHtml(a.type)}</div>
         </td>
-        <td>
-          <div class="primary-cell-text">${escapeHtml(a.institution_name)}</div>
-          <div class="secondary-cell-text">${a.permanent_id}</div>
+        <td class="py-3 px-3">
+          <div class="font-semibold text-[#001332] text-xs">${escapeHtml(a.institution_name)}</div>
+          <div class="text-[10px] text-slate-400 font-mono">${escapeHtml(a.permanent_id)}</div>
         </td>
-        <td><span class="pill blue">${escapeHtml(a.current_stage)}</span></td>
-        <td>
-          <div style="display:flex;align-items:center;gap:8px">
-            <div style="flex:1;background:#e2e8f0;height:6px;border-radius:10px;overflow:hidden;width:70px">
-              <div style="background:#2563eb;height:100%;width:${a.progress}%;border-radius:10px"></div>
+        <td class="py-3 px-3">
+          <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#eaedff] text-[#001332] border border-[#dae2fd]">
+            ${escapeHtml(a.current_stage)}
+          </span>
+        </td>
+        <td class="py-3 px-3">
+          <div class="flex items-center gap-2">
+            <div class="flex-1 bg-slate-200 h-1.5 rounded-full overflow-hidden w-20">
+              <div class="bg-[#0f284e] h-full rounded-full" style="width:${a.progress}%"></div>
             </div>
-            <span style="font-size:11px;font-weight:600">${a.progress}%</span>
+            <span class="text-[11px] font-mono font-bold text-slate-700">${a.progress}%</span>
           </div>
         </td>
-        <td>${renderPill(a.status)}</td>
-        <td>
-          <button class="btn sm" onclick="App.navigate('applications', { id: '${a.id}' })">Inspect →</button>
+        <td class="py-3 px-3">
+          ${renderPill(a.status)}
+        </td>
+        <td class="py-3 px-3 text-right">
+          <button class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-100 text-[#001332] hover:bg-[#001332] hover:text-white transition-all shadow-xs" 
+            onclick="App.navigate('applications', { id: '${a.id}' })">
+            Inspect →
+          </button>
         </td>
       </tr>
     `).join("");
 
     // Priority alerts
-    const alerts = localStore.db.compliance.filter(c => /overdue|due soon|action/i.test(c.status)).slice(0, 4);
+    const alerts = (localStore.db.compliance || []).filter(c => /overdue|due soon|action/i.test(c.status)).slice(0, 4);
     const alertHtml = alerts.map(c => `
-      <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #f1f5f9;align-items:flex-start">
-        <span class="pill ${c.status === 'Overdue' ? 'red' : 'amber'}" style="margin-top:2px">!</span>
-        <div style="flex:1">
-          <strong style="font-size:12px;display:block;color:#0f172a">${escapeHtml(c.title)}</strong>
-          <span style="font-size:11px;color:#64748b">${escapeHtml(c.institution_name)} · Due ${formatDate(c.due_date)}</span>
+      <div class="flex items-start gap-3 py-2.5 border-b border-slate-100 last:border-none">
+        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${c.status === 'Overdue' ? 'bg-[#ffdad6] text-[#93000a]' : 'bg-[#ffdbce] text-[#571a00]'}">
+          !
+        </span>
+        <div class="flex-1 min-w-0">
+          <div class="text-xs font-bold text-[#001332] truncate">${escapeHtml(c.title)}</div>
+          <div class="text-[11px] text-slate-500 truncate">${escapeHtml(c.institution_name)} · Due ${formatDate(c.due_date)}</div>
         </div>
-        <button class="btn sm" onclick="App.navigate('compliance', { id: '${c.id}' })">Review</button>
+        <button class="px-2 py-0.5 text-[11px] font-semibold rounded bg-slate-100 text-[#001332] hover:bg-slate-200 shrink-0" 
+          onclick="App.navigate('compliance', { id: '${c.id}' })">
+          Review
+        </button>
       </div>
-    `).join("");
+    `).join("") || '<p class="text-xs text-slate-400 py-2">No critical compliance alerts outstanding.</p>';
 
-    // Recent activity audit timeline
-    const audits = localStore.db.audit.slice(0, 5);
+    // Audit logs
+    const audits = (localStore.db.audit || []).slice(0, 4);
     const auditHtml = audits.map(a => `
-      <div style="display:grid;grid-template-columns:24px 1fr;gap:12px;padding-bottom:14px;position:relative">
-        <div style="width:24px;height:24px;border-radius:6px;background:#eff6ff;color:#2563eb;display:grid;place-items:center;font-size:11px;font-weight:700">●</div>
-        <div>
-          <strong style="font-size:12px;color:#0f172a">${escapeHtml(a.action)}</strong>
-          <p style="font-size:11px;color:#64748b;margin:2px 0">${escapeHtml(a.detail)}</p>
-          <small style="font-size:10px;color:#94a3b8">${escapeHtml(a.actor)} (${escapeHtml(a.role)}) · ${escapeHtml(a.time)}</small>
+      <div class="flex items-start gap-3 py-2 border-b border-slate-100 last:border-none">
+        <div class="w-6 h-6 rounded bg-[#eaedff] text-[#001332] flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
+          ●
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="text-xs font-semibold text-[#001332] truncate">${escapeHtml(a.action)}</div>
+          <div class="text-[11px] text-slate-500 truncate">${escapeHtml(a.detail)}</div>
+          <div class="text-[10px] text-slate-400 font-mono">${escapeHtml(a.actor)} (${escapeHtml(a.role)}) · ${escapeHtml(a.time)}</div>
         </div>
       </div>
     `).join("");
 
     return `
-      <div class="page-header">
-        <div>
-          <div class="page-eyebrow">National Institutional Governance Dashboard</div>
-          <h1>Executive Overview</h1>
-          <p>Real-time regulatory pulse across institutional approval workflows, compliance deadlines, and grievance coordination.</p>
-        </div>
-        <div class="header-action-group">
-          <button class="btn" onclick="CSVUtil.downloadCSV('aicte_executive_snapshot.csv', localStore.db.applications)">⇩ Export Snapshot</button>
-          <button class="btn primary" onclick="App.openCreateModal('application')">＋ Lodgement New Application</button>
-        </div>
-      </div>
-
-      <!-- Stat Cards -->
-      <div class="stats-grid">
-        <div class="stat-card" onclick="App.navigate('institutions')">
-          <div class="stat-header">
-            <span>REGISTERED INSTITUTIONS</span>
-            <span class="stat-icon-wrapper" style="background:#eff6ff;color:#2563eb">▦</span>
+      <div class="space-y-6">
+        
+        <!-- Sovereign Header & Telemetry Strip -->
+        <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-4 pb-2 border-b border-slate-200/80">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="font-mono text-xs uppercase tracking-wider text-[#a73a00] font-bold">Apex Regulatory Governance Matrix</span>
+              <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+              <span class="font-mono text-xs text-slate-500">Session Cycle: APH 2026–27 (Phase II Scrutiny)</span>
+            </div>
+            <div class="flex items-baseline gap-3 flex-wrap">
+              <h1 class="font-headline text-2xl lg:text-3xl font-extrabold text-[#001332] tracking-tight">National Executive Regulatory Command</h1>
+              <span class="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-[#002f1e] text-[#23a274]">SYNC INTERVAL: 30s REAL-TIME</span>
+            </div>
+            <p class="text-xs text-slate-600 max-w-4xl">
+              Unified ministerial vantage integrating Module 1 (PGRC Grievances), Module 2 (Scrutiny & EVC Workflows), and Module 3 (Forensic OCR & DigiLocker Telemetry) across 11,482 approved institutions.
+            </p>
           </div>
-          <div class="stat-number">${sum.institutions}</div>
-          <div class="stat-subtext">Across technical education categories</div>
-        </div>
 
-        <div class="stat-card" onclick="App.navigate('applications')">
-          <div class="stat-header">
-            <span>APPLICATIONS IN WORKFLOW</span>
-            <span class="stat-icon-wrapper" style="background:#eff6ff;color:#2563eb">▤</span>
+          <!-- Quick Action Buttons -->
+          <div class="flex flex-wrap items-center gap-2 bg-slate-100/80 p-1.5 rounded-lg border border-slate-200">
+            <button class="px-3 py-1.5 bg-[#001332] text-white font-semibold text-xs rounded-md flex items-center gap-1.5 hover:bg-[#0f284e] transition-all shadow-xs" 
+              onclick="CSVUtil.downloadCSV('aicte_executive_snapshot.csv', localStore.db.applications)">
+              <span class="material-symbols-outlined text-[16px]">file_download</span>
+              <span>Cabinet Summary CSV</span>
+            </button>
+            <button class="px-3 py-1.5 bg-[#fd651e] text-white font-semibold text-xs rounded-md flex items-center gap-1.5 hover:bg-[#a73a00] transition-all shadow-xs" 
+              onclick="App.openCreateModal('application')">
+              <span class="material-symbols-outlined text-[16px]">add_circle</span>
+              <span>Lodgement New Application</span>
+            </button>
           </div>
-          <div class="stat-number">${sum.applications}</div>
-          <div class="stat-subtext">${sum.applications} active across scrutiny & EVC</div>
         </div>
 
-        <div class="stat-card" onclick="App.navigate('verification')">
-          <div class="stat-header">
-            <span>DOCUMENTS FOR REVIEW</span>
-            <span class="stat-icon-wrapper" style="background:#fffbeb;color:#b45309">◈</span>
+        <!-- 1. Executive Bento KPI Metric Tier -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          
+          <!-- Card 1: Total Active Applications -->
+          <div class="bg-white p-4 rounded-xl border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between cursor-pointer" onclick="App.navigate('applications')">
+            <div class="flex items-start justify-between">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total Submissions</span>
+              <span class="material-symbols-outlined text-[#001332] text-[20px]">account_balance</span>
+            </div>
+            <div class="my-2">
+              <div class="font-headline text-2xl font-extrabold text-[#001332] tracking-tight">14,892</div>
+              <div class="flex items-center gap-1 mt-0.5">
+                <span class="text-[11px] text-[#23a274] font-bold flex items-center">
+                  <span class="material-symbols-outlined text-[13px]">trending_up</span> +12.4%
+                </span>
+                <span class="text-[11px] text-slate-500">vs 2025 cycle</span>
+              </div>
+            </div>
+            <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden flex">
+              <div class="bg-[#001332]" style="width: 68%" title="Cleared: 68%"></div>
+              <div class="bg-[#a73a00]" style="width: 20%" title="Scrutiny: 20%"></div>
+              <div class="bg-[#ba1a1a]" style="width: 12%" title="Deficient: 12%"></div>
+            </div>
+            <div class="flex justify-between font-mono text-[10px] text-slate-500 mt-1.5">
+              <span>Cleared: 10,126</span>
+              <span>In Review: 4,766</span>
+            </div>
           </div>
-          <div class="stat-number">${pendingDocs}</div>
-          <div class="stat-subtext">${metrics.document_outcomes.mismatch} discrepancies flagged</div>
-        </div>
 
-        <div class="stat-card" onclick="App.navigate('compliance')">
-          <div class="stat-header">
-            <span>COMPLIANCE OBLIGATIONS</span>
-            <span class="stat-icon-wrapper" style="background:#fef2f2;color:#b91c1c">◷</span>
-          </div>
-          <div class="stat-number">${attentionCount}</div>
-          <div class="stat-subtext">${metrics.compliance_health.overdue} overdue · ${metrics.compliance_health.due_soon} due soon</div>
-        </div>
-      </div>
-
-      <!-- Main Layout Grid -->
-      <div class="grid-2">
-        <!-- Approval Pipeline Distribution -->
-        <div class="panel">
-          <div class="panel-header">
+          <!-- Card 2: Scrutiny / EVC Latency -->
+          <div class="bg-white p-4 rounded-xl border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between cursor-pointer" onclick="App.navigate('scrutiny')">
+            <div class="flex items-start justify-between">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Scrutiny / EVC Queue</span>
+              <span class="material-symbols-outlined text-[#a73a00] text-[20px]">hourglass_top</span>
+            </div>
+            <div class="my-2">
+              <div class="font-headline text-2xl font-extrabold text-[#001332] tracking-tight">1,842</div>
+              <div class="flex items-center gap-1.5 mt-0.5">
+                <span class="text-[10px] px-1.5 py-0.2 rounded bg-[#ffdad6] text-[#93000a] font-bold">284 Critical</span>
+                <span class="text-[11px] text-slate-500">>14 days SLA</span>
+              </div>
+            </div>
             <div>
-              <h3>Approval Workflow Pipeline</h3>
-              <p>Applications distributed by statutory processing stage</p>
+              <div class="flex justify-between text-[11px] text-slate-500 mb-1">
+                <span>Inspector Pool</span>
+                <span class="font-bold text-[#001332]">78% Allotted</span>
+              </div>
+              <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-[#0f284e] h-full" style="width: 78%"></div>
+              </div>
             </div>
-            <button class="btn sm" onclick="App.navigate('applications')">View Full Register →</button>
           </div>
-          <div class="panel-body">
-            <div style="display:grid;gap:12px;margin-bottom:20px">
-              ${[
-                ['Preliminary validation', metrics.stage_distribution['Preliminary validation'] || 0],
-                ['Scrutiny & Re-scrutiny', (metrics.stage_distribution['Scrutiny'] || 0) + (metrics.stage_distribution['Re-scrutiny'] || 0)],
-                ['EVC scheduling & visits', (metrics.stage_distribution['EVC scheduling'] || 0) + (metrics.stage_distribution['EVC completed'] || 0)],
-                ['SAC / SHC Committee Review', metrics.stage_distribution['SAC/SHC review'] || 0],
-                ['Authorized disposition', metrics.stage_distribution['Authorized disposition'] || 0]
-              ].map(([stg, count]) => {
-                const pct = Math.max(8, Math.round((count / Math.max(1, sum.applications)) * 100));
-                return `
-                  <div>
-                    <div style="display:flex;justify-content:space-between;font-size:11.5px;font-weight:600;margin-bottom:4px">
-                      <span>${stg}</span>
-                      <span>${count} applications</span>
+
+          <!-- Card 3: Cross-Bureau Complaint Overlaps -->
+          <div class="bg-white p-4 rounded-xl border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between cursor-pointer relative overflow-hidden" onclick="App.navigate('coordination')">
+            <div class="absolute top-0 left-0 w-full h-1 bg-[#fd651e]"></div>
+            <div class="flex items-start justify-between">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-[#a73a00]">Bureau Clashes</span>
+              <span class="material-symbols-outlined text-[#fd651e] text-[20px]">crisis_alert</span>
+            </div>
+            <div class="my-2">
+              <div class="font-headline text-2xl font-extrabold text-[#a73a00] tracking-tight">142</div>
+              <div class="text-[11px] text-slate-600 font-semibold mt-0.5">PGRC ⟷ Regulation Bureau</div>
+            </div>
+            <div class="bg-slate-50 p-1.5 rounded flex items-center justify-between border border-slate-100">
+              <span class="text-[11px] text-slate-600">Concurrent Inquiries</span>
+              <span class="font-mono text-[10px] font-bold text-[#a73a00] bg-[#ffdbce] px-1.5 py-0.2 rounded">Auto-Held</span>
+            </div>
+          </div>
+
+          <!-- Card 4: Document Anomaly & Forensic OCR -->
+          <div class="bg-white p-4 rounded-xl border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between cursor-pointer" onclick="App.navigate('verification')">
+            <div class="flex items-start justify-between">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Forensic OCR Alerts</span>
+              <span class="material-symbols-outlined text-[#001332] text-[20px]">document_scanner</span>
+            </div>
+            <div class="my-2">
+              <div class="font-headline text-2xl font-extrabold text-[#001332] tracking-tight">389</div>
+              <div class="text-[11px] text-slate-500 mt-0.5">Cadastral & FSI Mismatches</div>
+            </div>
+            <div class="flex items-center justify-between text-[11px] pt-1 border-t border-slate-100">
+              <span class="font-mono text-[#a73a00] font-bold">112 Stamp Discrepancies</span>
+              <span class="font-mono text-slate-400">State API</span>
+            </div>
+          </div>
+
+          <!-- Card 5: Time-Bound Undertakings at Risk -->
+          <div class="bg-white p-4 rounded-xl border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between cursor-pointer" onclick="App.navigate('compliance')">
+            <div class="flex items-start justify-between">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-[#ba1a1a]">Undertakings At Risk</span>
+              <span class="material-symbols-outlined text-[#ba1a1a] text-[20px]">event_busy</span>
+            </div>
+            <div class="my-2">
+              <div class="font-headline text-2xl font-extrabold text-[#ba1a1a] tracking-tight">215</div>
+              <div class="flex items-center gap-1 mt-0.5">
+                <span class="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-slate-100 text-slate-700">&lt; 60 Days Expiry</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between text-[11px] pt-1 border-t border-slate-100">
+              <span class="text-slate-600">FDR / Lease Delinquency</span>
+              <span class="font-mono text-[10px] font-bold text-[#ba1a1a] bg-[#ffdad6] px-1.5 py-0.2 rounded">Auto-Notice</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Sovereign Case Banner (ABC Institute Quick Demonstration) -->
+        <div class="bg-[#eaedff]/60 rounded-xl p-4 border border-[#dae2fd] shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg bg-[#0f284e] text-white flex items-center justify-center shrink-0 shadow-sm">
+              <span class="material-symbols-outlined text-[22px]">balance</span>
+            </div>
+            <div class="space-y-0.5">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-headline font-bold text-sm text-[#001332]">Demonstration Case Focus: ABC Institute of Technology & Management</span>
+                <span class="font-mono text-[11px] px-2 py-0.5 rounded bg-white text-[#001332] font-bold border border-slate-200">PID: 1-43890219</span>
+                <span class="text-[10px] px-2 py-0.5 rounded bg-[#ffdad6] text-[#93000a] font-bold">Coordinated Injunction</span>
+              </div>
+              <p class="text-xs text-slate-600">
+                Registered land deed lease expires 31-March-2026. Concurrently flagged under PGRC Grievance #GR-2026-904 for unauthorized mezzanine construction. Approval grant is systematically frozen across Scrutiny Bureau (RB).
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <button class="px-3 py-1.5 bg-white text-[#001332] font-semibold text-xs rounded-md shadow-xs hover:bg-slate-100 border border-slate-200 transition-colors flex items-center gap-1.5" 
+              onclick="App.navigate('digitalTwin', { id: 'INST-2026-001' })">
+              <span class="material-symbols-outlined text-[16px]">visibility</span>
+              <span>Digital Twin Dossier</span>
+            </button>
+            <button class="px-3 py-1.5 bg-[#a73a00] text-white font-semibold text-xs rounded-md shadow-xs hover:bg-[#fd651e] transition-colors flex items-center gap-1.5" 
+              onclick="App.navigate('coordination')">
+              <span class="material-symbols-outlined text-[16px]">gavel</span>
+              <span>Summon Bureau Hearing</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. National Regulatory Regional Directorate Processing Velocity -->
+        <div class="bg-white rounded-xl border border-slate-200/90 shadow-xs p-5 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-100">
+            <div>
+              <h2 class="font-headline font-bold text-base text-[#001332]">Regional Directorate Processing Velocity</h2>
+              <p class="text-xs text-slate-500">Statutory compliance benchmarks under AICTE Approval Process Handbook (APH 2026–27)</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] font-mono text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">
+                SLA Standard: &lt; 7 Days
+              </span>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs font-sans">
+              <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                <tr>
+                  <th class="py-2.5 px-3">Regional Bureau & Office</th>
+                  <th class="py-2.5 px-3">Submissions</th>
+                  <th class="py-2.5 px-3">Throughput Velocity</th>
+                  <th class="py-2.5 px-3">Avg Latency</th>
+                  <th class="py-2.5 px-3">EVC Completion</th>
+                  <th class="py-2.5 px-3 text-right">Flagged %</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 font-medium">
+                <tr class="hover:bg-slate-50/60 transition-colors">
+                  <td class="py-3 px-3">
+                    <div class="font-bold text-[#001332]">NWRO — Chandigarh</div>
+                    <div class="text-[11px] text-slate-500">Punjab, Haryana, HP, J&K, Ladakh</div>
+                  </td>
+                  <td class="py-3 px-3 font-mono font-bold">2,314</td>
+                  <td class="py-3 px-3">
+                    <div class="w-36">
+                      <div class="flex justify-between font-mono text-[10px] mb-1">
+                        <span>72.4%</span>
+                        <span class="text-slate-400">1,675 cleared</span>
+                      </div>
+                      <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div class="bg-[#001332] h-full" style="width: 72.4%"></div>
+                      </div>
                     </div>
-                    <div style="height:7px;background:#f1f5f9;border-radius:6px;overflow:hidden">
-                      <div style="height:100%;background:#2563eb;width:${pct}%;border-radius:6px"></div>
+                  </td>
+                  <td class="py-3 px-3 font-mono">6.2 Days</td>
+                  <td class="py-3 px-3">
+                    <span class="px-2 py-0.5 rounded-full bg-[#002f1e] text-[#23a274] text-[10px] font-bold">91.8% Done</span>
+                  </td>
+                  <td class="py-3 px-3 text-right font-mono text-[#a73a00] font-bold">2.4%</td>
+                </tr>
+
+                <tr class="hover:bg-slate-50/60 transition-colors">
+                  <td class="py-3 px-3">
+                    <div class="font-bold text-[#001332]">SRO — Chennai</div>
+                    <div class="text-[11px] text-slate-500">Tamil Nadu, Puducherry, A&N</div>
+                  </td>
+                  <td class="py-3 px-3 font-mono font-bold">3,490</td>
+                  <td class="py-3 px-3">
+                    <div class="w-36">
+                      <div class="flex justify-between font-mono text-[10px] mb-1">
+                        <span>84.1%</span>
+                        <span class="text-slate-400">2,935 cleared</span>
+                      </div>
+                      <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div class="bg-[#001332] h-full" style="width: 84.1%"></div>
+                      </div>
                     </div>
-                  </div>
-                `;
-              }).join("")}
+                  </td>
+                  <td class="py-3 px-3 font-mono text-[#23a274] font-bold">4.8 Days</td>
+                  <td class="py-3 px-3">
+                    <span class="px-2 py-0.5 rounded-full bg-[#002f1e] text-[#23a274] text-[10px] font-bold">96.2% Done</span>
+                  </td>
+                  <td class="py-3 px-3 text-right font-mono text-slate-600 font-bold">1.1%</td>
+                </tr>
+
+                <tr class="hover:bg-slate-50/60 transition-colors">
+                  <td class="py-3 px-3">
+                    <div class="font-bold text-[#001332]">WRO — Mumbai</div>
+                    <div class="text-[11px] text-slate-500">Maharashtra, Goa, DNH & DD</div>
+                  </td>
+                  <td class="py-3 px-3 font-mono font-bold">2,880</td>
+                  <td class="py-3 px-3">
+                    <div class="w-36">
+                      <div class="flex justify-between font-mono text-[10px] mb-1">
+                        <span>61.2%</span>
+                        <span class="text-slate-400">1,762 cleared</span>
+                      </div>
+                      <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div class="bg-[#fd651e] h-full" style="width: 61.2%"></div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-3 px-3 font-mono text-[#a73a00] font-bold">11.4 Days</td>
+                  <td class="py-3 px-3">
+                    <span class="px-2 py-0.5 rounded-full bg-[#ffdbce] text-[#571a00] text-[10px] font-bold">68.4% Done</span>
+                  </td>
+                  <td class="py-3 px-3 text-right font-mono text-[#ba1a1a] font-bold">5.8%</td>
+                </tr>
+
+                <tr class="hover:bg-slate-50/60 transition-colors">
+                  <td class="py-3 px-3">
+                    <div class="font-bold text-[#001332]">SWRO — Bengaluru</div>
+                    <div class="text-[11px] text-slate-500">Karnataka, Kerala, Lakshadweep</div>
+                  </td>
+                  <td class="py-3 px-3 font-mono font-bold">2,150</td>
+                  <td class="py-3 px-3">
+                    <div class="w-36">
+                      <div class="flex justify-between font-mono text-[10px] mb-1">
+                        <span>79.5%</span>
+                        <span class="text-slate-400">1,709 cleared</span>
+                      </div>
+                      <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div class="bg-[#001332] h-full" style="width: 79.5%"></div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-3 px-3 font-mono text-[#23a274] font-bold">5.3 Days</td>
+                  <td class="py-3 px-3">
+                    <span class="px-2 py-0.5 rounded-full bg-[#002f1e] text-[#23a274] text-[10px] font-bold">94.0% Done</span>
+                  </td>
+                  <td class="py-3 px-3 text-right font-mono text-slate-600 font-bold">1.8%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 3. Workflow Table & Intelligence Panels Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          
+          <!-- Left 8 Columns: Live Approval Register -->
+          <div class="lg:col-span-8 bg-white rounded-xl border border-slate-200/90 shadow-xs p-5 space-y-4">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div>
+                <h3 class="font-headline font-bold text-base text-[#001332]">Approval Workflow Pipeline</h3>
+                <p class="text-xs text-slate-500">Applications undergoing statutory scrutiny & EVC verification</p>
+              </div>
+              <button class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-100 text-[#001332] hover:bg-slate-200 transition-colors" 
+                onclick="App.navigate('applications')">
+                View Full Register →
+              </button>
             </div>
 
-            <div class="table-responsive">
-              <table class="data-table">
-                <thead>
+            <!-- Stage distribution meter -->
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 pb-2">
+              ${[
+                ['Validation', metrics.stage_distribution['Preliminary validation'] || 0, 'bg-slate-200 text-slate-700'],
+                ['Scrutiny', (metrics.stage_distribution['Scrutiny'] || 0) + (metrics.stage_distribution['Re-scrutiny'] || 0), 'bg-[#eaedff] text-[#001332]'],
+                ['EVC Visits', (metrics.stage_distribution['EVC scheduling'] || 0) + (metrics.stage_distribution['EVC completed'] || 0), 'bg-[#ffdbce] text-[#571a00]'],
+                ['SAC/SHC', metrics.stage_distribution['SAC/SHC review'] || 0, 'bg-[#ffdad6] text-[#93000a]'],
+                ['Disposition', metrics.stage_distribution['Authorized disposition'] || 0, 'bg-[#002f1e] text-[#23a274]']
+              ].map(([stg, count, cls]) => `
+                <div class="p-2 rounded-lg bg-slate-50 border border-slate-100 text-center">
+                  <div class="text-[10px] text-slate-500 uppercase font-semibold">${stg}</div>
+                  <div class="font-mono font-bold text-sm text-[#001332] mt-0.5">${count}</div>
+                </div>
+              `).join("")}
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs font-sans">
+                <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
                   <tr>
-                    <th>APPLICATION</th>
-                    <th>INSTITUTION</th>
-                    <th>STAGE</th>
-                    <th>PROGRESS</th>
-                    <th>STATUS</th>
-                    <th>ACTION</th>
+                    <th class="py-2.5 px-3">APPLICATION</th>
+                    <th class="py-2.5 px-3">INSTITUTION</th>
+                    <th class="py-2.5 px-3">STAGE</th>
+                    <th class="py-2.5 px-3">PROGRESS</th>
+                    <th class="py-2.5 px-3">STATUS</th>
+                    <th class="py-2.5 px-3 text-right">ACTION</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -168,51 +431,61 @@ const OverviewModule = {
               </table>
             </div>
           </div>
-        </div>
 
-        <!-- Right Side: Priority Alerts & Bureau Workload -->
-        <div style="display:flex;flex-direction:column;gap:20px">
-          <!-- Priority Actions -->
-          <div class="panel">
-            <div class="panel-header">
-              <h3>Priority Administrative Alerts</h3>
-              <span class="pill amber">${alerts.length} Immediate</span>
+          <!-- Right 4 Columns: Priority Alerts & Bureau Stream -->
+          <div class="lg:col-span-4 space-y-4">
+            
+            <!-- Priority Administrative Alerts -->
+            <div class="bg-white rounded-xl border border-slate-200/90 shadow-xs p-4">
+              <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
+                <h3 class="font-headline font-bold text-sm text-[#001332]">Priority Alerts</h3>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#ffdbce] text-[#571a00]">
+                  ${alerts.length} Immediate
+                </span>
+              </div>
+              <div>
+                ${alertHtml}
+              </div>
             </div>
-            <div class="panel-body" style="padding-top:10px">
-              ${alertHtml || '<p class="muted">No priority alerts outstanding.</p>'}
-            </div>
-          </div>
 
-          <!-- Cross-Bureau Coordination Notice -->
-          <div class="panel">
-            <div class="panel-header">
-              <h3>Cross-Bureau Coordination</h3>
-              <span class="pill blue">${sum.overlapping_cases} Suggested Overlaps</span>
-            </div>
-            <div class="panel-body">
-              <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px;margin-bottom:12px">
-                <div style="display:flex;align-items:center;gap:8px;font-weight:700;color:#1e40af;font-size:12px">
-                  <span>⌁</span> Overlapping Grievance Signal Detected
+            <!-- Cross-Bureau Coordination Radar -->
+            <div class="bg-white rounded-xl border border-slate-200/90 shadow-xs p-4">
+              <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
+                <h3 class="font-headline font-bold text-sm text-[#001332]">Bureau Coordination</h3>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#eaedff] text-[#001332]">
+                  ${sum.overlapping_cases} Clashes
+                </span>
+              </div>
+              <div class="bg-[#eff6ff] border border-[#bfdbfe] rounded-lg p-3 space-y-1 mb-3">
+                <div class="flex items-center gap-1.5 font-bold text-[#1e40af] text-xs">
+                  <span class="material-symbols-outlined text-[16px]">crisis_alert</span>
+                  <span>Overlap Signal Active</span>
                 </div>
-                <p style="font-size:11.5px;color:#1e3a8a;margin-top:4px">
-                  Public grievance <b>PGRC-26-01842</b> correlates with Regulation Bureau audit <b>RB-26-00917</b> regarding excess student admissions at Noida Institute of Engineering & Technology.
+                <p class="text-[11px] text-[#1e3a8a] leading-relaxed">
+                  Public grievance <b>PGRC-26-01842</b> correlates with Regulation Bureau audit <b>RB-26-00917</b> regarding excess student admissions at Noida Institute.
                 </p>
               </div>
-              <button class="btn sm primary" style="width:100%" onclick="App.navigate('coordination')">Open Coordination Workspace →</button>
+              <button class="w-full py-1.5 bg-[#001332] text-white font-semibold text-xs rounded-md hover:bg-[#0f284e] transition-colors flex items-center justify-center gap-1.5 shadow-xs" 
+                onclick="App.navigate('coordination')">
+                <span>Open Coordination Workspace</span>
+                <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+              </button>
             </div>
-          </div>
 
-          <!-- Activity Audit Stream -->
-          <div class="panel">
-            <div class="panel-header">
-              <h3>Recent Governance Audit Trail</h3>
-              <button class="btn sm" onclick="App.navigate('audit')">Full Audit →</button>
+            <!-- Recent Governance Audit Trail -->
+            <div class="bg-white rounded-xl border border-slate-200/90 shadow-xs p-4">
+              <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
+                <h3 class="font-headline font-bold text-sm text-[#001332]">Recent Audit Trail</h3>
+                <button class="text-[11px] font-semibold text-[#0f284e] hover:underline" onclick="App.navigate('audit')">Full Trail →</button>
+              </div>
+              <div class="space-y-1">
+                ${auditHtml}
+              </div>
             </div>
-            <div class="panel-body" style="padding-top:14px">
-              ${auditHtml}
-            </div>
+
           </div>
         </div>
+
       </div>
     `;
   }

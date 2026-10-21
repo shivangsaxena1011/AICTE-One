@@ -30,3 +30,6 @@ AICTE_ONE_Production_Platform.zip
 # OS files
 .DS_Store
 Thumbs.db
+
+# Reference UI assets from user downloads
+reference_ui/

@@ -1,5 +1,6 @@
 /**
- * Module 9: Complaints and Grievances Registry
+ * Module 9: Complaints and Grievances Intelligence (Module 1 in Reference)
+ * "Bharat Civic-Sovereign Tech" Design System
  */
 const ComplaintsModule = {
   state: {
@@ -19,117 +20,234 @@ const ComplaintsModule = {
     }
 
     const rows = filtered.map(c => `
-      <tr>
-        <td><b>${c.id}</b></td>
-        <td>
-          <div class="primary-cell-text">${escapeHtml(c.institution_name)}</div>
-          <div class="secondary-cell-text">${c.channel}</div>
+      <tr class="hover:bg-slate-50/80 transition-colors border-b border-slate-100">
+        <td class="py-3 px-3">
+          <div class="font-bold text-[#001332] font-mono text-xs">${escapeHtml(c.id)}</div>
+          <div class="text-[10px] text-slate-400 font-mono">${formatDate(c.received_date)}</div>
         </td>
-        <td><span class="pill gray">${escapeHtml(c.bureau)}</span></td>
-        <td>
-          <div class="primary-cell-text">${escapeHtml(c.category)}</div>
-          <div class="secondary-cell-text" style="max-width:300px;white-space:normal">${escapeHtml(c.summary)}</div>
+        <td class="py-3 px-3">
+          <div class="font-semibold text-[#001332] text-xs">${escapeHtml(c.institution_name)}</div>
+          <div class="text-[11px] text-slate-500">${escapeHtml(c.channel || 'CPGRAMS')}</div>
         </td>
-        <td>${escapeHtml(c.assigned_to)}</td>
-        <td>${formatDate(c.received_date)}</td>
-        <td>${renderPill(c.status)}</td>
-        <td>
-          ${c.related_case_id ? `<span class="pill amber" style="cursor:pointer" onclick="App.navigate('coordination')">Linked: ${c.related_case_id}</span>` : '—'}
+        <td class="py-3 px-3">
+          <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#eaedff] text-[#001332] border border-[#dae2fd]">
+            ${escapeHtml(c.bureau)}
+          </span>
         </td>
-        <td>
-          <div style="display:flex;gap:6px">
-            <button class="btn sm" onclick="ComplaintsModule.openTransferModal('${c.id}')">Transfer</button>
-            <button class="btn sm primary" onclick="ComplaintsModule.openDisposeModal('${c.id}')">Dispose</button>
+        <td class="py-3 px-3 max-w-xs">
+          <div class="font-semibold text-[#001332] text-xs">${escapeHtml(c.category)}</div>
+          <div class="text-[11px] text-slate-600 line-clamp-2">${escapeHtml(c.summary)}</div>
+        </td>
+        <td class="py-3 px-3">
+          <div class="text-xs text-slate-700">${escapeHtml(c.assigned_to)}</div>
+        </td>
+        <td class="py-3 px-3">
+          ${renderPill(c.status)}
+        </td>
+        <td class="py-3 px-3">
+          ${c.related_case_id ? `
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-[#ffdbce] text-[#571a00] border border-[#ffb599] cursor-pointer hover:bg-[#ffb599] transition-colors" onclick="App.navigate('coordination')">
+              <span class="material-symbols-outlined text-[12px]">link</span>
+              <span>Linked: ${escapeHtml(c.related_case_id)}</span>
+            </span>
+          ` : '<span class="text-slate-300 font-mono text-xs">—</span>'}
+        </td>
+        <td class="py-3 px-3 text-right">
+          <div class="flex items-center justify-end gap-1.5">
+            <button class="px-2 py-1 text-xs font-semibold rounded bg-slate-100 text-[#001332] hover:bg-slate-200 transition-colors" 
+              onclick="ComplaintsModule.openTransferModal('${c.id}')">
+              Transfer
+            </button>
+            <button class="px-2 py-1 text-xs font-semibold rounded bg-[#001332] text-white hover:bg-[#0f284e] transition-colors shadow-xs" 
+              onclick="ComplaintsModule.openDisposeModal('${c.id}')">
+              Dispose
+            </button>
           </div>
         </td>
       </tr>
     `).join("");
 
+    const openCount = list.filter(c => !/closed|disposed/i.test(c.status)).length;
+    const overlapCount = list.filter(c => c.related_case_id).length;
+
     return `
-      <div class="page-header">
-        <div>
-          <div class="page-eyebrow">Institutional Grievance Intelligence</div>
-          <h1>Central Complaints Registry</h1>
-          <p>Unify grievance intake across Public Grievance Redressal Cell (PGRC), Regulation Bureau, and Regional Offices.</p>
-        </div>
-        <div class="header-action-group">
-          <button class="btn" onclick="CSVUtil.downloadCSV('aicte_complaints_register.csv', localStore.db.complaints)">⇩ Export CSV</button>
-          <button class="btn" onclick="App.navigate('coordination')">⌁ Cross-Bureau Coordination Workspace →</button>
-          <button class="btn primary" onclick="ComplaintsModule.openRegisterModal()">＋ Register Grievance / Case</button>
-        </div>
-      </div>
+      <div class="space-y-6">
+        
+        <!-- Sovereign Header -->
+        <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-4 pb-2 border-b border-slate-200/80">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="font-mono text-xs uppercase tracking-wider text-[#a73a00] font-bold">Institutional Grievance Intelligence</span>
+              <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+              <span class="font-mono text-xs text-slate-500">Cross-Bureau Coordination Protocol PS-26264</span>
+            </div>
+            <div class="flex items-baseline gap-3 flex-wrap">
+              <h1 class="font-headline text-2xl lg:text-3xl font-extrabold text-[#001332] tracking-tight">Central Complaints & Grievance Registry</h1>
+              <span class="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-[#002f1e] text-[#23a274]">INSPECTION GATEWAY: SYNCHRONIZED</span>
+            </div>
+            <p class="text-xs text-slate-600 max-w-4xl">
+              Unifies grievance intake across Public Grievance Redressal Cell (PGRC), Regulation Bureau, and Regional Directorates with automated cross-bureau overlap detection.
+            </p>
+          </div>
 
-      <!-- Stats Grid -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-header"><span>OPEN GRIEVANCES</span><span>☷</span></div>
-          <div class="stat-number">${list.filter(c => !/closed|disposed/i.test(c.status)).length}</div>
-          <div class="stat-subtext">Active grievance dossiers</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-header"><span>OVERLAPPING CASES</span><span style="color:#b45309">⌁</span></div>
-          <div class="stat-number">${list.filter(c => c.related_case_id).length}</div>
-          <div class="stat-subtext">Cross-bureau correlation detected</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-header"><span>BUREAUS INVOLVED</span><span>▦</span></div>
-          <div class="stat-number">${new Set(list.map(c => c.bureau)).size}</div>
-          <div class="stat-subtext">Coordinating administrative cells</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-header"><span>AVERAGE DISPOSAL</span><span>◷</span></div>
-          <div class="stat-number">14 Days</div>
-          <div class="stat-subtext">Citizen charter compliance</div>
-        </div>
-      </div>
-
-      <!-- Table Panel -->
-      <div class="panel">
-        <div class="filter-toolbar">
-          <input
-            class="filter-input"
-            placeholder="Search complaint ID, institution, or summary…"
-            value="${escapeHtml(this.state.search)}"
-            oninput="ComplaintsModule.handleSearch(this.value)"
-          />
-          <select class="filter-select" onchange="ComplaintsModule.handleFilter('bureau', this.value)">
-            <option value="">All Bureaus / Cells</option>
-            <option value="PGRC">PGRC</option>
-            <option value="Regulation Bureau">Regulation Bureau</option>
-            <option value="Regional Office">Regional Office</option>
-            <option value="Approval Bureau">Approval Bureau</option>
-          </select>
-          <select class="filter-select" onchange="ComplaintsModule.handleFilter('status', this.value)">
-            <option value="">All Statuses</option>
-            <option value="Received">Received</option>
-            <option value="Assigned">Assigned</option>
-            <option value="Under process">Under process</option>
-            <option value="Awaiting information">Awaiting information</option>
-            <option value="Disposed or closed">Disposed or closed</option>
-          </select>
-          <span style="font-size:11px;color:#64748b;margin-left:auto"><b>${filtered.length}</b> cases</span>
+          <div class="flex flex-wrap items-center gap-2 bg-slate-100/80 p-1.5 rounded-lg border border-slate-200">
+            <button class="px-3 py-1.5 bg-white text-[#001332] font-semibold text-xs rounded-md shadow-xs hover:bg-slate-50 border border-slate-200 transition-colors flex items-center gap-1.5" 
+              onclick="CSVUtil.downloadCSV('aicte_complaints_register.csv', localStore.db.complaints)">
+              <span class="material-symbols-outlined text-[16px]">file_download</span>
+              <span>Export CSV</span>
+            </button>
+            <button class="px-3 py-1.5 bg-[#001332] text-white font-semibold text-xs rounded-md shadow-xs hover:bg-[#0f284e] transition-colors flex items-center gap-1.5" 
+              onclick="App.navigate('coordination')">
+              <span class="material-symbols-outlined text-[16px]">alt_route</span>
+              <span>Bureau Coordination</span>
+            </button>
+            <button class="px-3 py-1.5 bg-[#fd651e] text-white font-semibold text-xs rounded-md shadow-xs hover:bg-[#a73a00] transition-colors flex items-center gap-1.5" 
+              onclick="ComplaintsModule.openRegisterModal()">
+              <span class="material-symbols-outlined text-[16px]">add_circle</span>
+              <span>Register Grievance</span>
+            </button>
+          </div>
         </div>
 
-        <div class="table-responsive">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>CASE ID</th>
-                <th>INSTITUTION</th>
-                <th>BUREAU / CELL</th>
-                <th>CATEGORY & SUMMARY</th>
-                <th>INVESTIGATOR</th>
-                <th>RECEIVED</th>
-                <th>STATUS</th>
-                <th>CROSS-BUREAU LINK</th>
-                <th>ACTIONS</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rows || '<tr><td colspan="9" style="text-align:center;padding:24px;color:#64748b">No complaints recorded.</td></tr>'}
-            </tbody>
-          </table>
+        <!-- Overlap Intelligence Banner -->
+        <div class="bg-[#eaedff]/60 rounded-xl p-4 border border-[#dae2fd] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg bg-[#a73a00] text-white flex items-center justify-center shrink-0 shadow-sm">
+              <span class="material-symbols-outlined text-[22px]">crisis_alert</span>
+            </div>
+            <div class="space-y-0.5">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-headline font-bold text-sm text-[#001332]">Statutory Overlap Intelligence Detector</span>
+                <span class="px-2 py-0.5 rounded bg-[#ffdad6] text-[#93000a] font-bold text-[10px]">142 Active Inquiries Clashed</span>
+              </div>
+              <p class="text-xs text-slate-600">
+                PGRC citizen complaints and Regulation Bureau surprise audits are checked against the shared Institution Digital Twin to prevent conflicting dispositions or unauthorized approvals during ongoing inquiries.
+              </p>
+            </div>
+          </div>
+          <button class="px-3 py-1.5 bg-[#001332] text-white font-semibold text-xs rounded-md shadow-xs hover:bg-[#0f284e] transition-colors flex items-center gap-1.5 shrink-0" 
+            onclick="App.navigate('coordination')">
+            <span>View Clashes Matrix</span>
+            <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+          </button>
         </div>
+
+        <!-- Bento KPI Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div class="bg-white p-4 rounded-xl border border-slate-200/90 shadow-xs flex flex-col justify-between">
+            <div class="flex items-start justify-between">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Open Grievances</span>
+              <span class="material-symbols-outlined text-[#001332] text-[20px]">mark_email_unread</span>
+            </div>
+            <div class="my-2">
+              <div class="font-headline text-2xl font-extrabold text-[#001332] tracking-tight">${openCount}</div>
+              <div class="text-[11px] text-slate-500 mt-0.5">Active investigation files</div>
+            </div>
+            <div class="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
+              <div class="bg-[#001332] h-full" style="width: 65%"></div>
+            </div>
+          </div>
+
+          <div class="bg-white p-4 rounded-xl border border-slate-200/90 shadow-xs flex flex-col justify-between">
+            <div class="flex items-start justify-between">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-[#a73a00]">Overlapping Cases</span>
+              <span class="material-symbols-outlined text-[#a73a00] text-[20px]">alt_route</span>
+            </div>
+            <div class="my-2">
+              <div class="font-headline text-2xl font-extrabold text-[#a73a00] tracking-tight">${overlapCount}</div>
+              <div class="text-[11px] text-slate-500 mt-0.5">Cross-bureau correlation detected</div>
+            </div>
+            <div class="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
+              <div class="bg-[#a73a00] h-full" style="width: 80%"></div>
+            </div>
+          </div>
+
+          <div class="bg-white p-4 rounded-xl border border-slate-200/90 shadow-xs flex flex-col justify-between">
+            <div class="flex items-start justify-between">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Participating Bureaus</span>
+              <span class="material-symbols-outlined text-[#001332] text-[20px]">corporate_fare</span>
+            </div>
+            <div class="my-2">
+              <div class="font-headline text-2xl font-extrabold text-[#001332] tracking-tight">${new Set(list.map(c => c.bureau)).size}</div>
+              <div class="text-[11px] text-slate-500 mt-0.5">Coordinating administrative wings</div>
+            </div>
+            <div class="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
+              <div class="bg-[#0f284e] h-full" style="width: 100%"></div>
+            </div>
+          </div>
+
+          <div class="bg-white p-4 rounded-xl border border-slate-200/90 shadow-xs flex flex-col justify-between">
+            <div class="flex items-start justify-between">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-[#23a274]">Avg Disposal SLA</span>
+              <span class="material-symbols-outlined text-[#23a274] text-[20px]">timer</span>
+            </div>
+            <div class="my-2">
+              <div class="font-headline text-2xl font-extrabold text-[#23a274] tracking-tight">14 Days</div>
+              <div class="text-[11px] text-slate-500 mt-0.5">Citizen charter compliance benchmark</div>
+            </div>
+            <div class="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
+              <div class="bg-[#23a274] h-full" style="width: 88%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Complaints Table Container -->
+        <div class="bg-white rounded-xl border border-slate-200/90 shadow-xs p-5 space-y-4">
+          
+          <!-- Filter Controls -->
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-2 border-b border-slate-100">
+            <div class="flex-1 max-w-md relative">
+              <span class="material-symbols-outlined absolute left-3 top-2 text-slate-400 text-[18px]">search</span>
+              <input
+                class="w-full pl-9 pr-4 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50/80 focus:bg-white focus:outline-none focus:border-[#001332] focus:ring-1 focus:ring-[#001332] transition-all placeholder:text-slate-400"
+                placeholder="Search complaint ID, institution name, or summary…"
+                value="${escapeHtml(this.state.search)}"
+                oninput="ComplaintsModule.handleSearch(this.value)"
+              />
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <select class="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none" 
+                onchange="ComplaintsModule.handleFilter('bureau', this.value)">
+                <option value="">All Bureaus / Cells</option>
+                <option value="PGRC" ${this.state.bureau === 'PGRC' ? 'selected' : ''}>PGRC</option>
+                <option value="Regulation Bureau" ${this.state.bureau === 'Regulation Bureau' ? 'selected' : ''}>Regulation Bureau</option>
+                <option value="Regional Office" ${this.state.bureau === 'Regional Office' ? 'selected' : ''}>Regional Office</option>
+                <option value="Approval Bureau" ${this.state.bureau === 'Approval Bureau' ? 'selected' : ''}>Approval Bureau</option>
+              </select>
+              <select class="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none" 
+                onchange="ComplaintsModule.handleFilter('status', this.value)">
+                <option value="">All Statuses</option>
+                <option value="Received" ${this.state.status === 'Received' ? 'selected' : ''}>Received</option>
+                <option value="Assigned" ${this.state.status === 'Assigned' ? 'selected' : ''}>Assigned</option>
+                <option value="Under process" ${this.state.status === 'Under process' ? 'selected' : ''}>Under process</option>
+                <option value="Awaiting information" ${this.state.status === 'Awaiting information' ? 'selected' : ''}>Awaiting information</option>
+                <option value="Disposed or closed" ${this.state.status === 'Disposed or closed' ? 'selected' : ''}>Disposed or closed</option>
+              </select>
+              <span class="text-xs text-slate-500 font-mono pl-2"><b>${filtered.length}</b> cases</span>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs font-sans">
+              <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                <tr>
+                  <th class="py-2.5 px-3">CASE ID</th>
+                  <th class="py-2.5 px-3">INSTITUTION</th>
+                  <th class="py-2.5 px-3">BUREAU / CELL</th>
+                  <th class="py-2.5 px-3">CATEGORY & SUMMARY</th>
+                  <th class="py-2.5 px-3">INVESTIGATOR</th>
+                  <th class="py-2.5 px-3">STATUS</th>
+                  <th class="py-2.5 px-3">CROSS-BUREAU LINK</th>
+                  <th class="py-2.5 px-3 text-right">ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 font-medium">
+                ${rows || '<tr><td colspan="8" class="text-center py-8 text-slate-400">No complaints found matching filters.</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
     `;
   },
@@ -148,54 +266,58 @@ const ComplaintsModule = {
     App.openModal(
       "Register Citizen Grievance / Institutional Complaint",
       `
-        <form id="create-complaint-form" class="form-grid">
-          <div class="form-group full">
-            <label class="form-label">Institution Concerned *</label>
-            <select class="form-control" id="cplt-inst-id" required>
+        <form id="create-complaint-form" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Institution Concerned *</label>
+            <select class="w-full text-xs p-2 rounded-lg border border-slate-200 bg-white" id="cplt-inst-id" required>
               ${localStore.db.institutions.map(i => `<option value="${i.id}">${escapeHtml(i.name)} (${i.permanent_id})</option>`).join("")}
             </select>
           </div>
-          <div class="form-group">
-            <label class="form-label">Receiving Bureau / Cell *</label>
-            <select class="form-control" id="cplt-bureau">
-              <option>PGRC</option>
-              <option>Regulation Bureau</option>
-              <option>Regional Office</option>
-              <option>Approval Bureau</option>
-            </select>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Receiving Bureau / Cell *</label>
+              <select class="w-full text-xs p-2 rounded-lg border border-slate-200 bg-white" id="cplt-bureau">
+                <option>PGRC</option>
+                <option>Regulation Bureau</option>
+                <option>Regional Office</option>
+                <option>Approval Bureau</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Category *</label>
+              <select class="w-full text-xs p-2 rounded-lg border border-slate-200 bg-white" id="cplt-category">
+                <option>Student Admission & Intake</option>
+                <option>Faculty & Staff Grievance</option>
+                <option>Fee Refund / Overcharging</option>
+                <option>Infrastructure Deficiency</option>
+                <option>Institutional Records Discrepancy</option>
+              </select>
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Category *</label>
-            <select class="form-control" id="cplt-category">
-              <option>Student Admission & Intake</option>
-              <option>Faculty & Staff Grievance</option>
-              <option>Fee Refund / Overcharging</option>
-              <option>Infrastructure Deficiency</option>
-              <option>Institutional Records Discrepancy</option>
-            </select>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Intake Channel</label>
+              <select class="w-full text-xs p-2 rounded-lg border border-slate-200 bg-white" id="cplt-channel">
+                <option>Central Grievance Portal (CPGRAMS)</option>
+                <option>Online Grievance Submission</option>
+                <option>Internal Audit Alert</option>
+                <option>Regional Office Referral</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Assigned Investigator</label>
+              <input class="w-full text-xs p-2 rounded-lg border border-slate-200 bg-white" id="cplt-owner" value="M. Joshi (Grievance Officer)" />
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Intake Channel</label>
-            <select class="form-control" id="cplt-channel">
-              <option>Central Grievance Portal (CPGRAMS)</option>
-              <option>Online Grievance Submission</option>
-              <option>Internal Audit Alert</option>
-              <option>Regional Office Referral</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Assigned Investigator</label>
-            <input class="form-control" id="cplt-owner" value="M. Joshi (Grievance Officer)" />
-          </div>
-          <div class="form-group full">
-            <label class="form-label">Grievance Summary *</label>
-            <textarea class="form-control" id="cplt-summary" required placeholder="Clear summary of allegations or audit discrepancy..."></textarea>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Grievance Summary *</label>
+            <textarea class="w-full text-xs p-2 rounded-lg border border-slate-200 bg-white" id="cplt-summary" rows="3" required placeholder="Clear summary of allegations or audit discrepancy..."></textarea>
           </div>
         </form>
       `,
       `
-        <button class="btn" onclick="App.closeModal()">Cancel</button>
-        <button class="btn primary" onclick="ComplaintsModule.confirmRegister()">Register Dossier</button>
+        <button class="px-3 py-1.5 text-xs font-semibold rounded bg-slate-100 text-slate-700 hover:bg-slate-200" onclick="App.closeModal()">Cancel</button>
+        <button class="px-3 py-1.5 text-xs font-semibold rounded bg-[#001332] text-white hover:bg-[#0f284e]" onclick="ComplaintsModule.confirmRegister()">Register Dossier</button>
       `
     );
   },
@@ -228,7 +350,6 @@ const ComplaintsModule = {
       overlap_score: 0
     };
 
-    // Real-time overlap scan against other complaints for this institution
     const otherCase = localStore.db.complaints.find(c => c.institution_id === instId && c.id !== newCase.id);
     if (otherCase) {
       newCase.related_case_id = otherCase.id;
@@ -249,28 +370,30 @@ const ComplaintsModule = {
     App.openModal(
       `Transfer Grievance Dossier · ${c.id}`,
       `
-        <div style="font-size:12px;margin-bottom:12px">
-          <b>Case:</b> ${c.id} (${escapeHtml(c.bureau)})<br>
-          <b>Institution:</b> ${escapeHtml(c.institution_name)}
+        <div class="text-xs mb-3 text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+          <div><b>Case:</b> ${c.id} (${escapeHtml(c.bureau)})</div>
+          <div><b>Institution:</b> ${escapeHtml(c.institution_name)}</div>
         </div>
-        <div class="form-group full">
-          <label class="form-label">Transfer To Bureau / Cell *</label>
-          <select class="form-control" id="transfer-bureau">
-            <option>Regulation Bureau</option>
-            <option>Approval Bureau</option>
-            <option>PGRC</option>
-            <option>Regional Office</option>
-            <option>Central Vigilance Cell</option>
-          </select>
-        </div>
-        <div class="form-group full" style="margin-top:10px">
-          <label class="form-label">Transfer Rationale</label>
-          <textarea class="form-control" id="transfer-reason">Transferred for coordinated regulatory audit.</textarea>
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Transfer To Bureau / Cell *</label>
+            <select class="w-full text-xs p-2 rounded-lg border border-slate-200 bg-white" id="transfer-bureau">
+              <option>Regulation Bureau</option>
+              <option>Approval Bureau</option>
+              <option>PGRC</option>
+              <option>Regional Office</option>
+              <option>Central Vigilance Cell</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Transfer Rationale</label>
+            <textarea class="w-full text-xs p-2 rounded-lg border border-slate-200 bg-white" id="transfer-reason" rows="2">Transferred for coordinated regulatory audit.</textarea>
+          </div>
         </div>
       `,
       `
-        <button class="btn" onclick="App.closeModal()">Cancel</button>
-        <button class="btn primary" onclick="ComplaintsModule.confirmTransfer('${id}')">Execute Transfer</button>
+        <button class="px-3 py-1.5 text-xs font-semibold rounded bg-slate-100 text-slate-700 hover:bg-slate-200" onclick="App.closeModal()">Cancel</button>
+        <button class="px-3 py-1.5 text-xs font-semibold rounded bg-[#001332] text-white hover:bg-[#0f284e]" onclick="ComplaintsModule.confirmTransfer('${id}')">Execute Transfer</button>
       `
     );
   },
@@ -294,17 +417,17 @@ const ComplaintsModule = {
     App.openModal(
       `Dispose & Close Grievance Case · ${c.id}`,
       `
-        <div style="font-size:12px;margin-bottom:12px">
-          <b>Summary:</b> ${escapeHtml(c.summary)}
+        <div class="text-xs mb-3 text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+          <div><b>Summary:</b> ${escapeHtml(c.summary)}</div>
         </div>
-        <div class="form-group full">
-          <label class="form-label">Final Disposal Order / Resolution Notes *</label>
-          <textarea class="form-control" id="disposal-notes" style="min-height:90px" placeholder="Record inquiry outcome, compliance deed verified, or corrective directives issued..."></textarea>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Final Disposal Order / Resolution Notes *</label>
+          <textarea class="w-full text-xs p-2 rounded-lg border border-slate-200 bg-white" id="disposal-notes" rows="4" placeholder="Record inquiry outcome, compliance deed verified, or corrective directives issued..."></textarea>
         </div>
       `,
       `
-        <button class="btn" onclick="App.closeModal()">Cancel</button>
-        <button class="btn primary" onclick="ComplaintsModule.confirmDispose('${id}')">Disposed & Close File</button>
+        <button class="px-3 py-1.5 text-xs font-semibold rounded bg-slate-100 text-slate-700 hover:bg-slate-200" onclick="App.closeModal()">Cancel</button>
+        <button class="px-3 py-1.5 text-xs font-semibold rounded bg-[#001332] text-white hover:bg-[#0f284e]" onclick="ComplaintsModule.confirmDispose('${id}')">Disposed & Close File</button>
       `
     );
   },
