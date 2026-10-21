@@ -351,7 +351,7 @@ const GraphModule = {
 
     const jumpBtn = document.getElementById("inspector-jump-btn");
     jumpBtn.onclick = () => {
-      if (node.type === 'institution') App.navigate('digital-twin', { id: node.id });
+      if (node.type === 'institution') App.navigate('digitalTwin', { id: node.id });
       else if (node.type === 'application') App.navigate('applications', { id: node.id });
       else if (node.type === 'document') App.navigate('verification', { id: node.id });
       else if (node.type === 'compliance') App.navigate('compliance', { id: node.id });

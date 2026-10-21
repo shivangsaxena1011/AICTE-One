@@ -15,6 +15,7 @@ from backend.schemas import EVCCreate, EVCResponse
 router = APIRouter(prefix="/api/evc", tags=["EVC Scheduling"])
 
 @router.get("")
+@router.get("/sessions")
 def list_evc_schedules(status: Optional[str] = Query(None), db: Session = Depends(get_db)):
     query = db.query(EVCSchedule)
     if status:

@@ -28,12 +28,12 @@ const InstitutionsModule = {
     const rows = res.data.map(i => `
       <tr>
         <td>
-          <div class="primary-cell-text" style="color:#2563eb;cursor:pointer" onclick="App.navigate('digital-twin', { id: '${i.id}' })">
+          <div class="primary-cell-text" style="color:#001332;font-weight:700;cursor:pointer" onclick="App.navigate('digitalTwin', { id: '${i.id}' })">
             ${escapeHtml(i.name)}
           </div>
           <div class="secondary-cell-text">${escapeHtml(i.address || i.city)}</div>
         </td>
-        <td><span style="font-weight:700;color:#0f172a">${i.permanent_id}</span></td>
+        <td><span style="font-weight:700;color:#0f172a" class="font-mono">${i.permanent_id}</span></td>
         <td>${escapeHtml(i.state)} <div class="secondary-cell-text">${escapeHtml(i.district)}</div></td>
         <td>${escapeHtml(i.category)}</td>
         <td>${escapeHtml(i.institution_type)}</td>
@@ -41,7 +41,7 @@ const InstitutionsModule = {
         <td>${renderPill(i.approval_status)}</td>
         <td><span class="pill gray" style="font-size:10px">${escapeHtml(i.data_source)}</span></td>
         <td>
-          <button class="btn sm primary" onclick="App.navigate('digital-twin', { id: '${i.id}' })">Digital Twin →</button>
+          <button class="btn sm primary" onclick="App.navigate('digitalTwin', { id: '${i.id}' })">Digital Twin →</button>
         </td>
       </tr>
     `).join("");

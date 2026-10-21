@@ -15,6 +15,7 @@ from backend.models import AuditLog
 router = APIRouter(prefix="/api/audit", tags=["Audit Trail"])
 
 @router.get("")
+@router.get("/logs")
 def list_audit_logs(
     q: Optional[str] = Query(None),
     entity_type: Optional[str] = Query(None),

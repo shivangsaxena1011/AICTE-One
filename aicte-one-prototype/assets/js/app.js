@@ -9,14 +9,22 @@ const App = {
 
   modules: {
     'overview': () => (window.OverviewModule || OverviewModule),
+    'executive-intelligence': () => (window.OverviewModule || OverviewModule),
     'institutions': () => (window.InstitutionsModule || InstitutionsModule),
     'digitalTwin': () => (window.DigitalTwinModule || DigitalTwinModule),
+    'digital-twin': () => (window.DigitalTwinModule || DigitalTwinModule),
+    'digital_twin': () => (window.DigitalTwinModule || DigitalTwinModule),
+    'institution-digital-twin': () => (window.DigitalTwinModule || DigitalTwinModule),
     'applications': () => (window.ApplicationsModule || ApplicationsModule),
     'scrutiny': () => (window.ScrutinyModule || ScrutinyModule),
+    'approval-and-scrutiny-workflow': () => (window.ScrutinyModule || ScrutinyModule),
     'evc': () => (window.EvcModule || window.EVCModule || EVCModule),
     'verification': () => (window.VerificationModule || VerificationModule),
+    'intelligent-document-verification': () => (window.VerificationModule || VerificationModule),
     'compliance': () => (window.ComplianceModule || ComplianceModule),
+    'compliance-and-undertakings': () => (window.ComplianceModule || ComplianceModule),
     'complaints': () => (window.ComplaintsModule || ComplaintsModule),
+    'complaint-intelligence': () => (window.ComplaintsModule || ComplaintsModule),
     'coordination': () => (window.CoordinationModule || CoordinationModule),
     'tasks': () => (window.TasksModule || TasksModule),
     'graph': () => (window.GraphModule || GraphModule),
@@ -112,10 +120,11 @@ const App = {
     const pill = document.getElementById('backend-status-pill');
     if (!pill) return;
     const isLive = API.isBackendConnected();
-    pill.className = `flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${isLive ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`;
+    pill.className = `flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-semibold ${isLive ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}`;
     pill.innerHTML = `
-      <span class="w-2 h-2 rounded-full ${isLive ? 'bg-emerald-600' : 'bg-amber-600'}"></span>
-      ${isLive ? 'FastAPI Connected' : 'Browser Offline Mode'}
+      <span class="w-2 h-2 rounded-full ${isLive ? 'bg-emerald-600' : 'bg-amber-600'} shrink-0"></span>
+      <span class="hidden sm:inline">${isLive ? 'FastAPI Connected' : 'Browser Offline Mode'}</span>
+      <span class="sm:hidden">${isLive ? 'API Live' : 'Offline'}</span>
     `;
   },
 
@@ -154,10 +163,7 @@ const App = {
     });
 
     // Close mobile sidebar if open
-    const sidebar = document.getElementById('sidebar');
-    if (sidebar && sidebar.classList.contains('mobile-open')) {
-      sidebar.classList.remove('mobile-open');
-    }
+    this.toggleSidebar(false);
 
     // Render target module
     const moduleGetter = this.modules[route];
@@ -171,7 +177,14 @@ const App = {
             Object.fromEntries(new URLSearchParams(param)) :
             (typeof param === 'string' ? { id: param } : param || {});
 
-          const res = await module.render('main-content', paramObj);
+          let res;
+          // Route-aware parameter dispatching
+          if (['audit', 'notifications', 'reports', 'settings'].includes(route)) {
+            res = await module.render('main-content', paramObj);
+          } else {
+            res = await module.render(paramObj);
+          }
+
           if (typeof res === 'string' && contentContainer) {
             contentContainer.innerHTML = res;
           }
@@ -705,10 +718,22 @@ const App = {
     }, 4000);
   },
 
-  toggleSidebar() {
+  toggleSidebar(forceState = null) {
     const sidebar = document.getElementById('sidebar');
-    if (sidebar) {
-      sidebar.classList.toggle('mobile-open');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    if (!sidebar) return;
+
+    const isOpen = forceState !== null ? forceState : !sidebar.classList.contains('translate-x-0');
+    if (isOpen) {
+      sidebar.classList.remove('-translate-x-full');
+      sidebar.classList.add('translate-x-0');
+      if (backdrop) backdrop.classList.remove('hidden');
+      document.body.classList.add('overflow-hidden', 'md:overflow-auto');
+    } else {
+      sidebar.classList.remove('translate-x-0');
+      sidebar.classList.add('-translate-x-full');
+      if (backdrop) backdrop.classList.add('hidden');
+      document.body.classList.remove('overflow-hidden', 'md:overflow-auto');
     }
   }
 };

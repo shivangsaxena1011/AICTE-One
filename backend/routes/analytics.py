@@ -13,6 +13,7 @@ from backend.models import (
 router = APIRouter(prefix="/api/analytics", tags=["Analytics"])
 
 @router.get("/dashboard")
+@router.get("/kpis")
 @router.get("")
 def get_executive_overview_metrics(db: Session = Depends(get_db)):
     total_institutions = db.query(Institution).count()

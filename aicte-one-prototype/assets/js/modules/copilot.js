@@ -179,7 +179,7 @@ const CopilotModule = {
     else if (type.toLowerCase() === 'document') App.navigate('verification', { id });
     else if (type.toLowerCase() === 'compliance') App.navigate('compliance', { id });
     else if (type.toLowerCase() === 'complaint') App.navigate('complaints', { id });
-    else if (type.toLowerCase() === 'institution') App.navigate('digital-twin', { id });
+    else if (type.toLowerCase() === 'institution') App.navigate('digitalTwin', { id });
   },
 
   handleProviderChange(val) {

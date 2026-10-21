@@ -94,9 +94,9 @@ const OverviewModule = {
               <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
               <span class="font-mono text-xs text-slate-500">Session Cycle: APH 2026–27 (Phase II Scrutiny)</span>
             </div>
-            <div class="flex items-baseline gap-3 flex-wrap">
-              <h1 class="font-headline text-2xl lg:text-3xl font-extrabold text-[#001332] tracking-tight">National Executive Regulatory Command</h1>
-              <span class="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-[#002f1e] text-[#23a274]">SYNC INTERVAL: 30s REAL-TIME</span>
+            <div class="flex items-baseline gap-2 sm:gap-3 flex-wrap">
+              <h1 class="font-headline text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#001332] tracking-tight">National Executive Regulatory Command</h1>
+              <span class="font-mono text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded bg-[#002f1e] text-[#23a274]">SYNC INTERVAL: 30s REAL-TIME</span>
             </div>
             <p class="text-xs text-slate-600 max-w-4xl">
               Unified ministerial vantage integrating Module 1 (PGRC Grievances), Module 2 (Scrutiny & EVC Workflows), and Module 3 (Forensic OCR & DigiLocker Telemetry) across 11,482 approved institutions.
@@ -224,32 +224,32 @@ const OverviewModule = {
         </div>
 
         <!-- Active Sovereign Case Banner (ABC Institute Quick Demonstration) -->
-        <div class="bg-[#eaedff]/60 rounded-xl p-4 border border-[#dae2fd] shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div class="bg-[#eaedff]/60 rounded-xl p-3.5 sm:p-4 border border-[#dae2fd] shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
           <div class="flex items-start gap-3">
-            <div class="w-10 h-10 rounded-lg bg-[#0f284e] text-white flex items-center justify-center shrink-0 shadow-sm">
-              <span class="material-symbols-outlined text-[22px]">balance</span>
+            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#0f284e] text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5 sm:mt-0">
+              <span class="material-symbols-outlined text-[20px] sm:text-[22px]">balance</span>
             </div>
-            <div class="space-y-0.5">
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="font-headline font-bold text-sm text-[#001332]">Demonstration Case Focus: ABC Institute of Technology & Management</span>
-                <span class="font-mono text-[11px] px-2 py-0.5 rounded bg-white text-[#001332] font-bold border border-slate-200">PID: 1-43890219</span>
-                <span class="text-[10px] px-2 py-0.5 rounded bg-[#ffdad6] text-[#93000a] font-bold">Coordinated Injunction</span>
+            <div class="space-y-1">
+              <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <span class="font-headline font-bold text-xs sm:text-sm text-[#001332]">Demonstration Case Focus: ABC Institute of Technology & Management</span>
+                <span class="font-mono text-[10px] sm:text-[11px] px-2 py-0.5 rounded bg-white text-[#001332] font-bold border border-slate-200">PID: 1-43890219</span>
+                <span class="text-[9px] sm:text-[10px] px-2 py-0.5 rounded bg-[#ffdad6] text-[#93000a] font-bold">Coordinated Injunction</span>
               </div>
-              <p class="text-xs text-slate-600">
+              <p class="text-[11px] sm:text-xs text-slate-600 leading-relaxed">
                 Registered land deed lease expires 31-March-2026. Concurrently flagged under PGRC Grievance #GR-2026-904 for unauthorized mezzanine construction. Approval grant is systematically frozen across Scrutiny Bureau (RB).
               </p>
             </div>
           </div>
-          <div class="flex items-center gap-2 shrink-0">
-            <button class="px-3 py-1.5 bg-white text-[#001332] font-semibold text-xs rounded-md shadow-xs hover:bg-slate-100 border border-slate-200 transition-colors flex items-center gap-1.5" 
-              onclick="App.navigate('digitalTwin', { id: 'INST-2026-001' })">
+          <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 shrink-0 w-full lg:w-auto pt-2 lg:pt-0 border-t border-[#dae2fd]/60 lg:border-t-0">
+            <button class="flex-1 sm:flex-initial px-3 py-1.5 bg-white text-[#001332] font-semibold text-xs rounded-md shadow-xs hover:bg-slate-100 border border-slate-200 transition-colors flex items-center justify-center gap-1.5" 
+              onclick="App.navigate('digitalTwin', { id: 'INST-10482' })">
               <span class="material-symbols-outlined text-[16px]">visibility</span>
               <span>Digital Twin Dossier</span>
             </button>
-            <button class="px-3 py-1.5 bg-[#a73a00] text-white font-semibold text-xs rounded-md shadow-xs hover:bg-[#fd651e] transition-colors flex items-center gap-1.5" 
+            <button class="flex-1 sm:flex-initial px-3 py-1.5 bg-[#a73a00] text-white font-semibold text-xs rounded-md shadow-xs hover:bg-[#fd651e] transition-colors flex items-center justify-center gap-1.5" 
               onclick="App.navigate('coordination')">
               <span class="material-symbols-outlined text-[16px]">gavel</span>
-              <span>Summon Bureau Hearing</span>
+              <span>Summon Hearing</span>
             </button>
           </div>
         </div>

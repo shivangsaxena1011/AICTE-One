@@ -13,6 +13,7 @@ from backend.models import (
 router = APIRouter(prefix="/api/graph", tags=["Regulatory Intelligence Graph"])
 
 @router.get("")
+@router.get("/summary")
 def get_graph_data(institution_id: Optional[str] = Query(None), db: Session = Depends(get_db)):
     """
     Builds the complete Regulatory Intelligence Graph connecting Institutions,
