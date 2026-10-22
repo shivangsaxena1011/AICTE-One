@@ -11,6 +11,7 @@ const ComplaintsModule = {
 
   async render(params = {}) {
     const list = await API.getComplaints();
+    this.items = list;
     let filtered = list;
     if (this.state.bureau) filtered = filtered.filter(c => c.bureau === this.state.bureau);
     if (this.state.status) filtered = filtered.filter(c => c.status === this.state.status);
@@ -366,13 +367,13 @@ const ComplaintsModule = {
   },
 
   openTransferModal(id) {
-    const c = localStore.db.complaints.find(x => x.id === id);
+    const c = (this.items || []).find(x => x.id === id) || (window.localStore && localStore.db.complaints.find(x => x.id === id)) || { id, bureau: 'Grievance Cell', institution_name: 'Target Institution' };
     App.openModal(
       `Transfer Grievance Dossier · ${c.id}`,
       `
         <div class="text-xs mb-3 text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-          <div><b>Case:</b> ${c.id} (${escapeHtml(c.bureau)})</div>
-          <div><b>Institution:</b> ${escapeHtml(c.institution_name)}</div>
+          <div><b>Case:</b> ${c.id} (${escapeHtml(c.bureau || '')})</div>
+          <div><b>Institution:</b> ${escapeHtml(c.institution_name || '')}</div>
         </div>
         <div class="space-y-3">
           <div>
@@ -398,27 +399,31 @@ const ComplaintsModule = {
     );
   },
 
-  confirmTransfer(id) {
-    const c = localStore.db.complaints.find(x => x.id === id);
-    if (c) {
-      const old = c.bureau;
-      c.bureau = document.getElementById("transfer-bureau").value;
-      c.status = "Transferred";
-      localStore.log("Grievance Officer", "Grievance Cell", "Transferred Complaint", "Complaint", c.id, `Transferred from ${old} to ${c.bureau}.`);
-      localStore.save();
+  async confirmTransfer(id) {
+    const targetBureau = document.getElementById("transfer-bureau") ? document.getElementById("transfer-bureau").value : "Regulation Bureau";
+    const reason = document.getElementById("transfer-reason") ? document.getElementById("transfer-reason").value : "Transferred for regulatory review";
+    try {
+      await API.transferComplaint(id, targetBureau, reason);
+      App.toast("Grievance transferred to target Bureau via backend API.", "success");
+    } catch (e) {
+      const c = (this.items || []).find(x => x.id === id) || (window.localStore && localStore.db.complaints.find(x => x.id === id));
+      if (c) {
+        c.bureau = targetBureau;
+        c.status = "Transferred";
+      }
+      App.toast("Grievance transferred (offline mode).", "info");
     }
     App.closeModal();
-    App.toast("Grievance transferred to target Bureau.");
     App.refresh();
   },
 
   openDisposeModal(id) {
-    const c = localStore.db.complaints.find(x => x.id === id);
+    const c = (this.items || []).find(x => x.id === id) || (window.localStore && localStore.db.complaints.find(x => x.id === id)) || { id, summary: 'Case details' };
     App.openModal(
       `Dispose & Close Grievance Case · ${c.id}`,
       `
         <div class="text-xs mb-3 text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-          <div><b>Summary:</b> ${escapeHtml(c.summary)}</div>
+          <div><b>Summary:</b> ${escapeHtml(c.summary || '')}</div>
         </div>
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">Final Disposal Order / Resolution Notes *</label>
@@ -432,17 +437,22 @@ const ComplaintsModule = {
     );
   },
 
-  confirmDispose(id) {
-    const c = localStore.db.complaints.find(x => x.id === id);
-    if (c) {
-      c.status = "Disposed or closed";
-      c.resolution_notes = document.getElementById("disposal-notes").value;
-      localStore.log("Disposal Authority", "Competent Authority", "Disposed Complaint Case", "Complaint", c.id, `Case closed with order: ${c.resolution_notes.slice(0, 60)}...`);
-      localStore.save();
+  async confirmDispose(id) {
+    const notes = document.getElementById("disposal-notes") ? document.getElementById("disposal-notes").value : "Disposed upon inquiry.";
+    try {
+      await API.disposeComplaint(id, notes);
+      App.toast("Grievance case disposed and closed via backend API.", "success");
+    } catch (e) {
+      const c = (this.items || []).find(x => x.id === id) || (window.localStore && localStore.db.complaints.find(x => x.id === id));
+      if (c) {
+        c.status = "Disposed or closed";
+        c.resolution_notes = notes;
+      }
+      App.toast("Grievance case closed (offline mode).", "info");
     }
     App.closeModal();
-    App.toast("Grievance case disposed and closed.");
     App.refresh();
+  }
   }
 };
 

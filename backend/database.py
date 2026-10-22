@@ -1,9 +1,22 @@
 """
 Database Connection and Session Management
 """
+import os
+import shutil
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import sessionmaker, declarative_base
 from backend.config import settings
+
+# On Vercel serverless environment, bootstrap /tmp/aicte_one.db from pre-seeded master database
+if os.getenv("VERCEL") == "1" or settings.DATABASE_URL.startswith("sqlite:////tmp/"):
+    tmp_db_path = "/tmp/aicte_one.db"
+    source_db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "aicte_one.db"))
+    if not os.path.exists(tmp_db_path) or os.path.getsize(tmp_db_path) == 0:
+        if os.path.exists(source_db_path) and os.path.getsize(source_db_path) > 0:
+            try:
+                shutil.copyfile(source_db_path, tmp_db_path)
+            except Exception as e:
+                pass
 
 connect_args = {"check_same_thread": False} if settings.DATABASE_URL.startswith("sqlite") else {}
 

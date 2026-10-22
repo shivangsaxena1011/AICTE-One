@@ -297,8 +297,16 @@ const App = {
   fillDemoLogin(username, password) {
     const uInput = document.getElementById('login-input-username');
     const pInput = document.getElementById('login-input-password');
+    const mInput = document.getElementById('login-input-mfa');
     if (uInput) uInput.value = username;
     if (pInput) pInput.value = password;
+    if (mInput) {
+      if (username === 'superadmin' || username === 'security.officer') {
+        mInput.value = '123456';
+      } else {
+        mInput.value = '';
+      }
+    }
   },
 
   async handleLoginFormSubmit(targetRoute) {
@@ -326,7 +334,15 @@ const App = {
       }
     } catch (err) {
       if (errBox) {
-        errBox.textContent = err.message || 'Invalid username or password.';
+        let msg = err.message || 'Invalid username or password.';
+        if (msg.toLowerCase().includes('mfa code required') || msg.toLowerCase().includes('mfa')) {
+          msg = 'MFA code required for this privileged account. For audit/demo inspection, enter PIN: 123456';
+          if (mInput) {
+            mInput.focus();
+            if (!mInput.value) mInput.value = '123456';
+          }
+        }
+        errBox.textContent = msg;
         errBox.classList.remove('hidden');
       }
       if (submitBtn) {

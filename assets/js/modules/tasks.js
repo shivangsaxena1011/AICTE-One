@@ -8,7 +8,16 @@ const TasksModule = {
   },
 
   async render() {
-    let list = localStore.db.tasks;
+    let list = [];
+    try {
+      const res = await API.getTasks();
+      list = Array.isArray(res) ? res : (res.items || res.data || []);
+    } catch (e) {
+      list = (window.localStore && localStore.db.tasks) || [];
+    }
+    if (!list.length && window.localStore) list = localStore.db.tasks || [];
+    this.items = list;
+
     if (this.state.priority) list = list.filter(t => t.priority === this.state.priority);
     if (this.state.status) list = list.filter(t => t.status === this.state.status);
 
@@ -163,27 +172,31 @@ const TasksModule = {
     );
   },
 
-  confirmComplete(id) {
-    const t = localStore.db.tasks.find(x => x.id === id);
-    if (t) {
-      t.status = "Completed";
-      t.resolution_notes = document.getElementById("task-res-notes").value;
-      localStore.log(t.assigned_to, "Officer", "Completed Task", "Task", t.id, `Completed task: ${t.resolution_notes.slice(0, 60)}...`);
-      localStore.save();
+  async confirmComplete(id) {
+    const notes = document.getElementById("task-res-notes") ? document.getElementById("task-res-notes").value : "Completed directive.";
+    try {
+      await API.updateTaskStatus(id, "Completed", notes);
+      App.toast("Task marked completed via backend API.", "success");
+    } catch (e) {
+      const t = (this.items || []).find(x => x.id === id) || (window.localStore && localStore.db.tasks.find(x => x.id === id));
+      if (t) {
+        t.status = "Completed";
+        t.resolution_notes = notes;
+      }
+      App.toast("Task marked completed (offline mode).", "info");
     }
     App.closeModal();
-    App.toast("Task marked completed.");
     App.refresh();
   },
 
   openEscalateModal(id) {
-    const t = localStore.db.tasks.find(x => x.id === id);
+    const t = (this.items || []).find(x => x.id === id) || (window.localStore && localStore.db.tasks.find(x => x.id === id)) || { id, title: 'Task Directive', assigned_to: 'Officer' };
     App.openModal(
       `Escalate Task · ${t.id}`,
       `
         <div style="font-size:12px;margin-bottom:12px">
-          <b>Task:</b> ${escapeHtml(t.title)}<br>
-          <b>Current Assignee:</b> ${escapeHtml(t.assigned_to)}
+          <b>Task:</b> ${escapeHtml(t.title || '')}<br>
+          <b>Current Assignee:</b> ${escapeHtml(t.assigned_to || '')}
         </div>
         <div class="form-group full">
           <label class="form-label">Escalate To Official / Committee *</label>
@@ -206,24 +219,28 @@ const TasksModule = {
     );
   },
 
-  confirmEscalate(id) {
-    const t = localStore.db.tasks.find(x => x.id === id);
-    if (t) {
-      t.priority = "Critical";
-      t.status = "Escalated";
-      const target = document.getElementById("escalate-target").value;
-      const reason = document.getElementById("escalate-reason").value;
-      t.assigned_to = target;
-      t.resolution_notes = `[Escalated to ${target}: ${reason}]`;
-      localStore.log("Escalation Officer", "Adjudicator", "Escalated Task", "Task", t.id, `Escalated to ${target}. Reason: ${reason}`);
-      localStore.save();
+  async confirmEscalate(id) {
+    const target = document.getElementById("escalate-target") ? document.getElementById("escalate-target").value : "Bureau Head";
+    const reason = document.getElementById("escalate-reason") ? document.getElementById("escalate-reason").value : "Escalated due to deadline";
+    try {
+      await API.escalateTask(id, target, reason);
+      App.toast("Task escalated via backend API.", "success");
+    } catch (e) {
+      const t = (this.items || []).find(x => x.id === id) || (window.localStore && localStore.db.tasks.find(x => x.id === id));
+      if (t) {
+        t.priority = "Critical";
+        t.status = "Escalated";
+        t.assigned_to = target;
+        t.resolution_notes = `[Escalated to ${target}: ${reason}]`;
+      }
+      App.toast("Task escalated (offline mode).", "info");
     }
     App.closeModal();
-    App.toast("Task escalated to senior authority.");
     App.refresh();
   },
 
   openCreateModal() {
+    const instList = (window.localStore && localStore.db.institutions) || [];
     App.openModal(
       "Create New Operational Task",
       `
@@ -266,7 +283,7 @@ const TasksModule = {
           <div class="form-group full">
             <label class="form-label">Related Institution</label>
             <select class="form-control" id="new-task-inst">
-              ${localStore.db.institutions.map(i => `<option value="${i.id}">${escapeHtml(i.name)} (${i.permanent_id})</option>`).join("")}
+              ${instList.map(i => `<option value="${i.id}">${escapeHtml(i.name)} (${i.permanent_id || i.id})</option>`).join("")}
             </select>
           </div>
           <div class="form-group">
@@ -282,9 +299,9 @@ const TasksModule = {
     );
   },
 
-  confirmCreate() {
-    const instId = document.getElementById("new-task-inst").value;
-    const inst = localStore.db.institutions.find(i => i.id === instId);
+  async confirmCreate() {
+    const instId = document.getElementById("new-task-inst") ? document.getElementById("new-task-inst").value : null;
+    const inst = instId && window.localStore ? localStore.db.institutions.find(i => i.id === instId) : null;
     const newTask = {
       id: "TSK-2026-" + Math.floor(1000 + Math.random() * 9000),
       title: document.getElementById("new-task-title").value,
@@ -299,11 +316,17 @@ const TasksModule = {
       resolution_notes: ""
     };
 
-    localStore.db.tasks.unshift(newTask);
-    localStore.log("Workflow Engine", "System", "Created Task", "Task", newTask.id, `Created task '${newTask.title}'.`);
-    localStore.save();
+    try {
+      await API.createTask(newTask);
+      App.toast("Task created via backend API.", "success");
+    } catch (e) {
+      if (window.localStore) {
+        localStore.db.tasks.unshift(newTask);
+        localStore.save();
+      }
+      App.toast("Task created (offline mode).", "info");
+    }
     App.closeModal();
-    App.toast("Action task created and queued.");
     App.refresh();
   }
 };

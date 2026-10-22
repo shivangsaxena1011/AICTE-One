@@ -9,6 +9,7 @@ const ComplianceModule = {
 
   async render(params = {}) {
     const list = await API.getCompliance();
+    this.items = list;
     let filtered = list;
     if (this.state.status) {
       filtered = filtered.filter(c => c.status === this.state.status);
@@ -175,9 +176,9 @@ const ComplianceModule = {
     );
   },
 
-  confirmCreate() {
-    const instId = document.getElementById("comp-inst-id").value;
-    const inst = localStore.db.institutions.find(i => i.id === instId);
+  async confirmCreate() {
+    const instId = document.getElementById("comp-inst-id") ? document.getElementById("comp-inst-id").value : "INST-001";
+    const inst = (window.localStore && localStore.db.institutions.find(i => i.id === instId));
     const newComp = {
       id: "CMP-" + Math.floor(1000 + Math.random() * 9000),
       institution_id: instId,
@@ -185,28 +186,34 @@ const ComplianceModule = {
       title: document.getElementById("comp-title").value,
       category: document.getElementById("comp-cat").value,
       due_date: document.getElementById("comp-due").value,
-      responsible_party: document.getElementById("comp-owner").value,
+      responsible_party: document.getElementById("comp-owner") ? document.getElementById("comp-owner").value : "Registrar",
       status: "Upcoming",
-      evidence_file: document.getElementById("comp-evidence").value || "—",
+      evidence_file: document.getElementById("comp-evidence") ? document.getElementById("comp-evidence").value || "—" : "—",
       review_notes: "Statutory obligation lodged."
     };
 
-    localStore.db.compliance.unshift(newComp);
-    localStore.log("Compliance Officer", "Compliance Division", "Created Compliance Obligation", "Compliance", newComp.id, `Created obligation '${newComp.title}' for ${newComp.institution_name}.`);
-    localStore.save();
+    try {
+      await API.createCompliance(newComp);
+      App.toast("Compliance obligation created via backend API.", "success");
+    } catch (e) {
+      if (window.localStore) {
+        localStore.db.compliance.unshift(newComp);
+        localStore.save();
+      }
+      App.toast("Compliance obligation created (offline mode).", "info");
+    }
     App.closeModal();
-    App.toast("Compliance obligation created.");
     App.refresh();
   },
 
   openUploadEvidenceModal(id) {
-    const c = localStore.db.compliance.find(x => x.id === id);
+    const c = (this.items || []).find(x => x.id === id) || (window.localStore && localStore.db.compliance.find(x => x.id === id)) || { id, title: 'Obligation', institution_name: 'Institution' };
     App.openModal(
       `Submit Compliance Evidence · ${c.id}`,
       `
         <div style="font-size:12px;margin-bottom:12px">
-          <b>Obligation:</b> ${escapeHtml(c.title)}<br>
-          <b>Institution:</b> ${escapeHtml(c.institution_name)}
+          <b>Obligation:</b> ${escapeHtml(c.title || '')}<br>
+          <b>Institution:</b> ${escapeHtml(c.institution_name || '')}
         </div>
         <div class="form-group full">
           <label class="form-label">Evidence Document Filename / Reference *</label>
@@ -224,27 +231,31 @@ const ComplianceModule = {
     );
   },
 
-  confirmEvidence(id) {
-    const c = localStore.db.compliance.find(x => x.id === id);
-    if (c) {
-      c.evidence_file = document.getElementById("evidence-file-name").value;
-      c.status = "Evidence submitted";
-      localStore.log("Institution User", "Institution", "Uploaded Compliance Evidence", "Compliance", c.id, `Uploaded evidence ${c.evidence_file}.`);
-      localStore.save();
+  async confirmEvidence(id) {
+    const fileName = document.getElementById("evidence-file-name") ? document.getElementById("evidence-file-name").value : `Evidence_${id}.pdf`;
+    try {
+      await API.submitUndertakingEvidence(id, fileName);
+      App.toast("Evidence recorded via backend API.", "success");
+    } catch (e) {
+      const c = (this.items || []).find(x => x.id === id) || (window.localStore && localStore.db.compliance.find(x => x.id === id));
+      if (c) {
+        c.evidence_file = fileName;
+        c.status = "Evidence submitted";
+      }
+      App.toast("Evidence submitted for officer verification (offline mode).", "info");
     }
     App.closeModal();
-    App.toast("Evidence submitted for officer verification.");
     App.refresh();
   },
 
   openReviewModal(id) {
-    const c = localStore.db.compliance.find(x => x.id === id);
+    const c = (this.items || []).find(x => x.id === id) || (window.localStore && localStore.db.compliance.find(x => x.id === id)) || { id, title: 'Obligation', evidence_file: 'Evidence.pdf' };
     App.openModal(
       `Review Compliance Evidence · ${c.id}`,
       `
         <div style="font-size:12px;margin-bottom:12px">
-          <b>Obligation:</b> ${escapeHtml(c.title)}<br>
-          <b>Evidence File:</b> ${escapeHtml(c.evidence_file)}
+          <b>Obligation:</b> ${escapeHtml(c.title || '')}<br>
+          <b>Evidence File:</b> ${escapeHtml(c.evidence_file || '—')}
         </div>
         <div class="form-group full">
           <label class="form-label">Review Verdict *</label>
@@ -266,18 +277,23 @@ const ComplianceModule = {
     );
   },
 
-  confirmReview(id) {
-    const c = localStore.db.compliance.find(x => x.id === id);
-    if (c) {
-      c.status = document.getElementById("review-verdict").value;
-      c.review_notes = document.getElementById("review-notes").value;
-      c.reviewed_by = "Compliance Officer";
-      c.reviewed_at = new Date().toISOString();
-      localStore.log("Compliance Officer", "Compliance Division", "Reviewed Compliance Obligation", "Compliance", c.id, `Marked as ${c.status}. Notes: ${c.review_notes}`);
-      localStore.save();
+  async confirmReview(id) {
+    const verdict = document.getElementById("review-verdict") ? document.getElementById("review-verdict").value : "Satisfied by evidence";
+    const notes = document.getElementById("review-notes") ? document.getElementById("review-notes").value : "Scrutinized and approved.";
+    try {
+      await API.reviewUndertaking(id, verdict, notes);
+      App.toast("Compliance review saved to backend API.", "success");
+    } catch (e) {
+      const c = (this.items || []).find(x => x.id === id) || (window.localStore && localStore.db.compliance.find(x => x.id === id));
+      if (c) {
+        c.status = verdict;
+        c.review_notes = notes;
+        c.reviewed_by = "Compliance Officer";
+        c.reviewed_at = new Date().toISOString();
+      }
+      App.toast("Review recorded successfully (offline mode).", "info");
     }
     App.closeModal();
-    App.toast("Review recorded successfully.");
     App.refresh();
   }
 };

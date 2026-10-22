@@ -284,7 +284,8 @@ const SettingsModule = {
   async authenticatePersona(username) {
     try {
       App.toast(`Authenticating ${username} on server...`, 'info');
-      await App.authenticatePersona(username, 'AicteOne@2026!');
+      const mfaCode = (username === 'superadmin' || username === 'security.officer') ? '123456' : null;
+      await App.authenticatePersona(username, 'AicteOne@2026!', mfaCode);
       this.render('main-content');
     } catch (e) {
       App.toast(`Authentication failed: ${e.message}`, 'error');

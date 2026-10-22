@@ -305,37 +305,44 @@ const VerificationModule = {
     );
   },
 
-  confirmUpload() {
-    const instId = document.getElementById("doc-inst-id").value;
-    const inst = localStore.db.institutions.find(i => i.id === instId);
-    const docType = document.getElementById("doc-type").value;
-    const authority = document.getElementById("doc-authority").value || "Authorized Authority";
+  async confirmUpload() {
+    const instId = document.getElementById("doc-inst-id") ? document.getElementById("doc-inst-id").value : "INST-001";
+    const inst = (window.localStore && localStore.db.institutions.find(i => i.id === instId));
+    const docType = document.getElementById("doc-type") ? document.getElementById("doc-type").value : "Registered Land Deed";
+    const authority = (document.getElementById("doc-authority") && document.getElementById("doc-authority").value) || "Authorized Authority";
+    const fileInput = document.getElementById("doc-file");
 
-    const newDoc = {
-      id: "DOC-" + Math.floor(1000 + Math.random() * 9000),
-      institution_id: instId,
-      institution_name: inst ? inst.name : "Institution",
-      document_type: docType,
-      name: `${docType} (${inst ? inst.permanent_id : 'AICTE'})`,
-      issuing_authority: authority,
-      confidence: "97.4%",
-      status: "Verified",
-      is_anomaly: false,
-      findings: "Document scanned and verified against state issuing registry. All statutory requirements met.",
-      extracted_fields: {
-        registration_no: "REG-" + Math.floor(100000 + Math.random() * 900000),
-        issue_date: "2026-05-10",
-        validity: "Permanent / Continuous",
-        issuing_authority: authority
+    let createdDoc;
+    if (fileInput && fileInput.files && fileInput.files.length > 0) {
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+      formData.append("institution_id", instId);
+      formData.append("document_type", docType);
+      formData.append("authority_ref", authority);
+      try {
+        createdDoc = await API.uploadDocument(formData);
+        App.toast("Document uploaded and OCR extracted via backend API.", "success");
+      } catch (e) {
+        console.warn("Upload error:", e);
       }
-    };
+    }
 
-    localStore.db.documents.unshift(newDoc);
-    localStore.log("Document Officer", "Scrutiny Cell", "Ingested Document", "Document", newDoc.id, `Ingested ${newDoc.document_type} for ${newDoc.institution_name}`);
-    localStore.save();
+    if (!createdDoc) {
+      const payload = {
+        institution_id: instId,
+        institution_name: inst ? inst.name : "Institution",
+        document_type: docType,
+        name: `${docType} (${inst ? (inst.permanent_id || inst.id) : 'AICTE'})`,
+        issuing_authority: authority
+      };
+      createdDoc = await API.uploadDocument(payload);
+      App.toast("Document ingested and verified.", "success");
+    }
+
     App.closeModal();
-    App.toast("Document ingested and verified successfully.");
-    this.selectedDocId = newDoc.id;
+    if (createdDoc && createdDoc.id) {
+      this.selectedDocId = createdDoc.id;
+    }
     App.refresh();
   },
 
@@ -367,17 +374,22 @@ const VerificationModule = {
     );
   },
 
-  saveCorrection(id) {
-    const d = localStore.db.documents.find(x => x.id === id);
-    if (d) {
-      d.status = document.getElementById("edit-doc-status").value;
-      d.findings = document.getElementById("edit-doc-findings").value;
-      d.is_anomaly = /mismatch|expiry/i.test(d.status);
-      localStore.log("Document Officer", "Scrutiny Cell", "Corrected Document", "Document", d.id, `Updated status to ${d.status}`);
-      localStore.save();
+  async saveCorrection(id) {
+    const statusVal = document.getElementById("edit-doc-status") ? document.getElementById("edit-doc-status").value : "Verified";
+    const findingsVal = document.getElementById("edit-doc-findings") ? document.getElementById("edit-doc-findings").value : "Reviewed";
+    try {
+      await API.reviewDocument(id, "CONFIRM_MATCH", findingsVal, null, statusVal);
+      App.toast("Document updated and human review logged to backend.", "success");
+    } catch (e) {
+      const d = window.localStore && localStore.db.documents.find(x => x.id === id);
+      if (d) {
+        d.status = statusVal;
+        d.findings = findingsVal;
+        d.is_anomaly = /mismatch|expiry/i.test(d.status);
+      }
+      App.toast("Document updated (offline mode).", "info");
     }
     App.closeModal();
-    App.toast("Document updated.");
     App.refresh();
   },
 

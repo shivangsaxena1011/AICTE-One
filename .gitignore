@@ -14,10 +14,10 @@ venv/
 htmlcov/
 
 # Databases & local dynamic states
-*.db
 *.sqlite3
-aicte_one.db
 test_aicte.db
+# Master pre-seeded official AICTE institutional database
+!aicte_one.db
 
 # Environment variables
 .env

@@ -98,10 +98,13 @@ class InstitutionSearchService:
         ).first()
 
         if exact_id_match:
+            summary = cls.format_institution_summary(exact_id_match)
             res = {
-                "confirmed_match": cls.format_institution_summary(exact_id_match),
+                "confirmed_match": summary,
                 "match_type": "EXACT_IDENTIFIER",
                 "possible_matches": [],
+                "items": [summary],
+                "data": [summary],
                 "query": query_str,
                 "total": 1
             }
@@ -114,10 +117,13 @@ class InstitutionSearchService:
         ).first()
 
         if exact_name_match:
+            summary = cls.format_institution_summary(exact_name_match)
             res = {
-                "confirmed_match": cls.format_institution_summary(exact_name_match),
+                "confirmed_match": summary,
                 "match_type": "EXACT_NAME",
                 "possible_matches": [],
+                "items": [summary],
+                "data": [summary],
                 "query": query_str,
                 "total": 1
             }
@@ -150,12 +156,15 @@ class InstitutionSearchService:
             for inst in results:
                 possibles.append(cls.format_institution_summary(inst))
 
+        all_results = ([confirmed] if confirmed else []) + possibles
         res = {
             "confirmed_match": confirmed,
             "match_type": "PARTIAL_OR_SUGGESTION" if possibles else "NONE",
             "possible_matches": possibles,
+            "items": all_results,
+            "data": all_results,
             "query": query_str,
-            "total": len(possibles) + (1 if confirmed else 0)
+            "total": len(all_results)
         }
         cls._SEARCH_CACHE[cache_key] = {"time": now_ts, "data": res}
         return res
