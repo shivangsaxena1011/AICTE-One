@@ -60,6 +60,13 @@ const VerificationModule = {
           </div>
 
           <div class="flex flex-wrap items-center gap-2 bg-slate-100/80 p-1.5 rounded-lg border border-slate-200">
+            <a href="https://documentverify-two.vercel.app/" target="_blank" rel="noopener noreferrer" 
+              class="px-3 py-1.5 bg-[#a73a00] hover:bg-[#8f3200] text-white font-semibold text-xs rounded-md shadow-xs transition-colors flex items-center gap-1.5"
+              title="Launch Live External AI Document Verification Service in New Tab">
+              <span class="material-symbols-outlined text-[16px]">verified</span>
+              <span>Document Verification Demo</span>
+              <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+            </a>
             <button class="px-3 py-1.5 bg-white text-[#001332] font-semibold text-xs rounded-md shadow-xs hover:bg-slate-50 border border-slate-200 transition-colors flex items-center gap-1.5" 
               onclick="VerificationModule.openReportModal('${activeDoc.id}')">
               <span class="material-symbols-outlined text-[16px]">print</span>

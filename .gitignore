@@ -31,5 +31,13 @@ AICTE_ONE_Production_Platform.zip
 .DS_Store
 Thumbs.db
 
+# Runtime file uploads and backups
+uploads/*
+!uploads/.gitkeep
+uploads/documents/*
+!uploads/documents/.gitkeep
+backups/*
+!backups/.gitkeep
+
 # Reference UI assets from user downloads
 reference_ui/

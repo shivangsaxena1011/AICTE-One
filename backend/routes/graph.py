@@ -1,24 +1,46 @@
 """
 Regulatory Intelligence Graph Router
+Secured with RBAC and Tenant-Scoped Subgraph Filtering
 """
 from typing import Optional
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
 from backend.models import (
-    Institution, Application, Document, ComplianceObligation, Complaint, Task, EVCSchedule
+    Institution, Application, Document, ComplianceObligation, Complaint, Task, EVCSchedule, User
+)
+from backend.auth import (
+    get_optional_user,
+    ROLE_SUPER_ADMIN, ROLE_SECURITY_OFFICER, ROLE_COMPLIANCE_OFFICER,
+    ROLE_COMPLAINT_OFFICER, ROLE_ANTI_RAGGING_OFFICER,
+    ROLE_INSTITUTE_HEAD, ROLE_STUDENT_COMPLAINANT, ROLE_PUBLIC_VISITOR
 )
 
 router = APIRouter(prefix="/api/graph", tags=["Regulatory Intelligence Graph"])
 
 @router.get("")
 @router.get("/summary")
-def get_graph_data(institution_id: Optional[str] = Query(None), db: Session = Depends(get_db)):
+def get_graph_data(
+    institution_id: Optional[str] = Query(None),
+    user: Optional[User] = Depends(get_optional_user),
+    db: Session = Depends(get_db)
+):
     """
-    Builds the complete Regulatory Intelligence Graph connecting Institutions,
+    Builds the Regulatory Intelligence Graph connecting Institutions,
     Applications, Documents, Complaints, Compliance, and Officials.
+    Respects tenant isolation: Institute Heads only see their own subgraph.
     """
+    is_officer = user and user.role in {
+        ROLE_SUPER_ADMIN, ROLE_SECURITY_OFFICER, ROLE_COMPLIANCE_OFFICER,
+        ROLE_COMPLAINT_OFFICER, ROLE_ANTI_RAGGING_OFFICER
+    }
+    is_institution = user and user.role == ROLE_INSTITUTE_HEAD
+
+    target_inst_id = institution_id
+    if is_institution:
+        target_inst_id = user.institution_id
+
     nodes = []
     edges = []
     node_ids = set()
@@ -52,57 +74,61 @@ def get_graph_data(institution_id: Optional[str] = Query(None), db: Session = De
                 "label": label
             })
 
-    # Query entities
     inst_query = db.query(Institution)
-    if institution_id:
-        inst_query = inst_query.filter(Institution.id == institution_id)
+    if target_inst_id:
+        inst_query = inst_query.filter(Institution.id == target_inst_id)
     institutions = inst_query.limit(10).all()
 
     for inst in institutions:
         add_node(inst.id, inst.name, "institution", inst.approval_status, f"Permanent ID: {inst.permanent_id} | {inst.city}")
 
-        # Applications
-        for a in inst.applications:
-            add_node(a.id, f"{a.type} ({a.current_stage})", "application", a.status, f"Progress: {a.progress}% | Owner: {a.owner}")
-            add_edge(inst.id, a.id, "SUBMITTED")
+        if is_officer or (is_institution and user.institution_id == inst.id):
+            # Applications
+            for a in inst.applications:
+                add_node(a.id, f"{a.type} ({a.current_stage})", "application", a.status, f"Progress: {a.progress}% | Owner: {a.owner}")
+                add_edge(inst.id, a.id, "SUBMITTED")
 
-            # EVC
-            for evc in a.evc_schedules:
-                add_node(evc.id, f"EVC: {evc.scheduled_date}", "evc", evc.status, f"Chair: {evc.committee_chair}")
-                add_edge(a.id, evc.id, "SCHEDULED_EVC")
+                # EVC
+                for evc in a.evc_schedules:
+                    add_node(evc.id, f"EVC: {evc.scheduled_date}", "evc", evc.status, f"Chair: {evc.committee_chair}")
+                    add_edge(a.id, evc.id, "SCHEDULED_EVC")
 
-            # Documents attached to application
-            for d in a.documents:
-                add_node(d.id, d.name, "document", d.status, f"Type: {d.document_type} | Confidence: {d.confidence}")
-                add_edge(a.id, d.id, "REQUIRES_DOCUMENT")
+                # Documents attached to application
+                for d in a.documents:
+                    add_node(d.id, d.name, "document", d.status, f"Type: {d.document_type} | Confidence: {d.confidence}")
+                    add_edge(a.id, d.id, "REQUIRES_DOCUMENT")
 
-        # Documents attached directly to institution
-        for d in inst.documents:
-            if d.id not in node_ids:
-                add_node(d.id, d.name, "document", d.status, f"Type: {d.document_type}")
-                add_edge(inst.id, d.id, "HAS_DOCUMENT")
+            # Documents attached directly to institution
+            for d in inst.documents:
+                if d.id not in node_ids:
+                    add_node(d.id, d.name, "document", d.status, f"Type: {d.document_type}")
+                    add_edge(inst.id, d.id, "HAS_DOCUMENT")
 
-        # Compliance Obligations
-        for c in inst.compliance_obligations:
-            add_node(c.id, c.title, "compliance", c.status, f"Due: {c.due_date} | Party: {c.responsible_party}")
-            add_edge(inst.id, c.id, "OBLIGATED_TO")
+            # Compliance Obligations
+            for c in inst.compliance_obligations:
+                add_node(c.id, c.title, "compliance", c.status, f"Due: {c.due_date} | Party: {c.responsible_party}")
+                add_edge(inst.id, c.id, "OBLIGATED_TO")
 
-        # Complaints
-        for cplt in inst.complaints:
-            add_node(cplt.id, f"{cplt.bureau}: {cplt.category}", "complaint", cplt.status, cplt.summary[:60])
-            add_edge(inst.id, cplt.id, "SUBJECT_OF_COMPLAINT")
+            # Complaints (exclude confidential if institution user)
+            for cplt in inst.complaints:
+                if is_institution and cplt.is_confidential:
+                    continue
+                add_node(cplt.id, f"{cplt.bureau}: {cplt.category}", "complaint", cplt.status, cplt.summary[:60])
+                add_edge(inst.id, cplt.id, "SUBJECT_OF_COMPLAINT")
 
-            if cplt.related_case_id and cplt.related_case_id in node_ids:
-                add_edge(cplt.id, cplt.related_case_id, "POTENTIAL_OVERLAP")
+                if cplt.related_case_id and cplt.related_case_id in node_ids:
+                    add_edge(cplt.id, cplt.related_case_id, "POTENTIAL_OVERLAP")
 
-        # Tasks
-        for t in inst.tasks:
-            add_node(t.id, t.title, "task", t.status, f"Assigned: {t.assigned_to} | Priority: {t.priority}")
-            add_edge(inst.id, t.id, "ACTION_REQUIRED")
+            # Tasks
+            for t in inst.tasks:
+                add_node(t.id, t.title, "task", t.status, f"Assigned: {t.assigned_to} | Priority: {t.priority}")
+                add_edge(inst.id, t.id, "ACTION_TASK")
 
     return {
         "nodes": nodes,
         "edges": edges,
-        "total_nodes": len(nodes),
-        "total_edges": len(edges)
+        "summary": {
+            "total_nodes": len(nodes),
+            "total_edges": len(edges)
+        }
     }

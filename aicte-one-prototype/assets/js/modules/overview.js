@@ -6,40 +6,47 @@ const OverviewModule = {
   async render() {
     const metrics = await API.getDashboardMetrics();
     const sum = metrics.summary || {
-      institutions: 11482,
-      applications: 14892,
-      pending_verification: 389,
-      compliance_alerts: 215,
-      overlapping_cases: 142
+      institutions: 8842,
+      applications: 8,
+      pending_verification: 0,
+      compliance_alerts: 1,
+      overlapping_cases: 3
     };
+    const kpis = metrics.kpis || metrics;
+    const totalAppsCount = (sum.applications || kpis.active_applications || 0);
+    const queueCount = ((kpis.evc_scheduled || 0) + (kpis.applications_in_active_stages || 0) || (metrics.stage_distribution && (metrics.stage_distribution['Scrutiny'] || 0)) || 2);
+    const overlapsCount = (sum.overlapping_cases || kpis.high_priority_and_critical_cases || 0);
+    const anomaliesCount = (sum.pending_verification || kpis.documents_awaiting_verification || 0);
+    const atRiskCount = (sum.compliance_alerts || kpis.failed_or_overdue_compliance || 0);
 
     // Applications for the live pipeline table
     const recentApps = await API.getApplications();
-    const appRows = recentApps.slice(0, 6).map(a => `
+    const appList = recentApps.items || recentApps.data || recentApps || [];
+    const appRows = appList.slice(0, 6).map(a => `
       <tr class="hover:bg-slate-50/80 transition-colors border-b border-slate-100">
         <td class="py-3 px-3">
           <div class="font-bold text-[#001332] font-mono text-xs">${escapeHtml(a.id)}</div>
-          <div class="text-[11px] text-slate-500">${escapeHtml(a.type)}</div>
+          <div class="text-[11px] text-slate-500">${escapeHtml(a.type || a.application_type || 'Approval')}</div>
         </td>
         <td class="py-3 px-3">
-          <div class="font-semibold text-[#001332] text-xs">${escapeHtml(a.institution_name)}</div>
-          <div class="text-[10px] text-slate-400 font-mono">${escapeHtml(a.permanent_id)}</div>
+          <div class="font-semibold text-[#001332] text-xs">${escapeHtml(a.institution_name || a.name || 'AICTE Institute')}</div>
+          <div class="text-[10px] text-slate-400 font-mono">${escapeHtml(a.permanent_id || a.institution_id || '')}</div>
         </td>
         <td class="py-3 px-3">
           <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#eaedff] text-[#001332] border border-[#dae2fd]">
-            ${escapeHtml(a.current_stage)}
+            ${escapeHtml(a.current_stage || a.stage_code || 'SCRUTINY')}
           </span>
         </td>
         <td class="py-3 px-3">
           <div class="flex items-center gap-2">
             <div class="flex-1 bg-slate-200 h-1.5 rounded-full overflow-hidden w-20">
-              <div class="bg-[#0f284e] h-full rounded-full" style="width:${a.progress}%"></div>
+              <div class="bg-[#0f284e] h-full rounded-full" style="width:${a.progress || 35}%"></div>
             </div>
-            <span class="text-[11px] font-mono font-bold text-slate-700">${a.progress}%</span>
+            <span class="text-[11px] font-mono font-bold text-slate-700">${a.progress || 35}%</span>
           </div>
         </td>
         <td class="py-3 px-3">
-          ${renderPill(a.status)}
+          ${renderPill(a.status || 'Under Review')}
         </td>
         <td class="py-3 px-3 text-right">
           <button class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-100 text-[#001332] hover:bg-[#001332] hover:text-white transition-all shadow-xs" 
@@ -51,15 +58,17 @@ const OverviewModule = {
     `).join("");
 
     // Priority alerts
-    const alerts = (localStore.db.compliance || []).filter(c => /overdue|due soon|action/i.test(c.status)).slice(0, 4);
+    const compRecords = await API.getCompliance();
+    const compList = compRecords.items || compRecords.data || compRecords || [];
+    const alerts = compList.filter(c => /overdue|due soon|action|pending/i.test(c.status || '')).slice(0, 4);
     const alertHtml = alerts.map(c => `
       <div class="flex items-start gap-3 py-2.5 border-b border-slate-100 last:border-none">
         <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${c.status === 'Overdue' ? 'bg-[#ffdad6] text-[#93000a]' : 'bg-[#ffdbce] text-[#571a00]'}">
           !
         </span>
         <div class="flex-1 min-w-0">
-          <div class="text-xs font-bold text-[#001332] truncate">${escapeHtml(c.title)}</div>
-          <div class="text-[11px] text-slate-500 truncate">${escapeHtml(c.institution_name)} · Due ${formatDate(c.due_date)}</div>
+          <div class="text-xs font-bold text-[#001332] truncate">${escapeHtml(c.title || c.obligation_name || 'Mandatory Undertaking')}</div>
+          <div class="text-[11px] text-slate-500 truncate">${escapeHtml(c.institution_name || c.institution_id || 'Institution')} · Due ${formatDate(c.due_date || c.deadline)}</div>
         </div>
         <button class="px-2 py-0.5 text-[11px] font-semibold rounded bg-slate-100 text-[#001332] hover:bg-slate-200 shrink-0" 
           onclick="App.navigate('compliance', { id: '${c.id}' })">
@@ -69,7 +78,9 @@ const OverviewModule = {
     `).join("") || '<p class="text-xs text-slate-400 py-2">No critical compliance alerts outstanding.</p>';
 
     // Audit logs
-    const audits = (localStore.db.audit || []).slice(0, 4);
+    const auditRes = await API.getAuditLogs();
+    const auditList = auditRes.items || auditRes.data || auditRes || [];
+    const audits = auditList.slice(0, 4);
     const auditHtml = audits.map(a => `
       <div class="flex items-start gap-3 py-2 border-b border-slate-100 last:border-none">
         <div class="w-6 h-6 rounded bg-[#eaedff] text-[#001332] flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
@@ -77,11 +88,11 @@ const OverviewModule = {
         </div>
         <div class="flex-1 min-w-0">
           <div class="text-xs font-semibold text-[#001332] truncate">${escapeHtml(a.action)}</div>
-          <div class="text-[11px] text-slate-500 truncate">${escapeHtml(a.detail)}</div>
-          <div class="text-[10px] text-slate-400 font-mono">${escapeHtml(a.actor)} (${escapeHtml(a.role)}) · ${escapeHtml(a.time)}</div>
+          <div class="text-[11px] text-slate-500 truncate">${escapeHtml(a.details || a.detail || a.entity_id || '')}</div>
+          <div class="text-[10px] text-slate-400 font-mono">${escapeHtml(a.actor)} (${escapeHtml(a.role || 'OFFICER')}) · ${escapeHtml(a.created_at || a.time || '')}</div>
         </div>
       </div>
-    `).join("");
+    `).join("") || '<p class="text-xs text-slate-400 py-2">No recent audit log entries.</p>';
 
     return `
       <div class="space-y-6">
@@ -128,22 +139,22 @@ const OverviewModule = {
               <span class="material-symbols-outlined text-[#001332] text-[20px]">account_balance</span>
             </div>
             <div class="my-2">
-              <div class="font-headline text-2xl font-extrabold text-[#001332] tracking-tight">14,892</div>
+              <div class="font-headline text-2xl font-extrabold text-[#001332] tracking-tight">${totalAppsCount.toLocaleString()}</div>
               <div class="flex items-center gap-1 mt-0.5">
                 <span class="text-[11px] text-[#23a274] font-bold flex items-center">
-                  <span class="material-symbols-outlined text-[13px]">trending_up</span> +12.4%
+                  <span class="material-symbols-outlined text-[13px]">trending_up</span> Live
                 </span>
-                <span class="text-[11px] text-slate-500">vs 2025 cycle</span>
+                <span class="text-[11px] text-slate-500">Academic Year 2026–27</span>
               </div>
             </div>
             <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden flex">
-              <div class="bg-[#001332]" style="width: 68%" title="Cleared: 68%"></div>
-              <div class="bg-[#a73a00]" style="width: 20%" title="Scrutiny: 20%"></div>
-              <div class="bg-[#ba1a1a]" style="width: 12%" title="Deficient: 12%"></div>
+              <div class="bg-[#001332]" style="width: 68%" title="Cleared"></div>
+              <div class="bg-[#a73a00]" style="width: 20%" title="Scrutiny"></div>
+              <div class="bg-[#ba1a1a]" style="width: 12%" title="Deficient"></div>
             </div>
             <div class="flex justify-between font-mono text-[10px] text-slate-500 mt-1.5">
-              <span>Cleared: 10,126</span>
-              <span>In Review: 4,766</span>
+              <span>Cleared: ${(kpis.new_approvals_period || 0).toLocaleString()}</span>
+              <span>In Review: ${(kpis.applications_in_active_stages || totalAppsCount).toLocaleString()}</span>
             </div>
           </div>
 
@@ -154,16 +165,16 @@ const OverviewModule = {
               <span class="material-symbols-outlined text-[#a73a00] text-[20px]">hourglass_top</span>
             </div>
             <div class="my-2">
-              <div class="font-headline text-2xl font-extrabold text-[#001332] tracking-tight">1,842</div>
+              <div class="font-headline text-2xl font-extrabold text-[#001332] tracking-tight">${queueCount.toLocaleString()}</div>
               <div class="flex items-center gap-1.5 mt-0.5">
-                <span class="text-[10px] px-1.5 py-0.2 rounded bg-[#ffdad6] text-[#93000a] font-bold">284 Critical</span>
-                <span class="text-[11px] text-slate-500">>14 days SLA</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded bg-[#ffdad6] text-[#93000a] font-bold">${(kpis.evc_scheduled || 0)} Scheduled</span>
+                <span class="text-[11px] text-slate-500">SLA Standard: &lt; 7 Days</span>
               </div>
             </div>
             <div>
               <div class="flex justify-between text-[11px] text-slate-500 mb-1">
-                <span>Inspector Pool</span>
-                <span class="font-bold text-[#001332]">78% Allotted</span>
+                <span>EVC Completed</span>
+                <span class="font-bold text-[#001332]">${(kpis.evc_completed || 0)} Inspected</span>
               </div>
               <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                 <div class="bg-[#0f284e] h-full" style="width: 78%"></div>
@@ -179,28 +190,31 @@ const OverviewModule = {
               <span class="material-symbols-outlined text-[#fd651e] text-[20px]">crisis_alert</span>
             </div>
             <div class="my-2">
-              <div class="font-headline text-2xl font-extrabold text-[#a73a00] tracking-tight">142</div>
+              <div class="font-headline text-2xl font-extrabold text-[#a73a00] tracking-tight">${overlapsCount.toLocaleString()}</div>
               <div class="text-[11px] text-slate-600 font-semibold mt-0.5">PGRC ⟷ Regulation Bureau</div>
             </div>
             <div class="bg-slate-50 p-1.5 rounded flex items-center justify-between border border-slate-100">
-              <span class="text-[11px] text-slate-600">Concurrent Inquiries</span>
-              <span class="font-mono text-[10px] font-bold text-[#a73a00] bg-[#ffdbce] px-1.5 py-0.2 rounded">Auto-Held</span>
+              <span class="text-[11px] text-slate-600">Active Grievances</span>
+              <span class="font-mono text-[10px] font-bold text-[#a73a00] bg-[#ffdbce] px-1.5 py-0.2 rounded">${(kpis.active_complaints || 0)} Tracked</span>
             </div>
           </div>
 
           <!-- Card 4: Document Anomaly & Forensic OCR -->
           <div class="bg-white p-4 rounded-xl border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between cursor-pointer" onclick="App.navigate('verification')">
             <div class="flex items-start justify-between">
-              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Forensic OCR Alerts</span>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Document Verification Queue</span>
               <span class="material-symbols-outlined text-[#001332] text-[20px]">document_scanner</span>
             </div>
             <div class="my-2">
-              <div class="font-headline text-2xl font-extrabold text-[#001332] tracking-tight">389</div>
-              <div class="text-[11px] text-slate-500 mt-0.5">Cadastral & FSI Mismatches</div>
+              <div class="font-headline text-2xl font-extrabold text-[#001332] tracking-tight">${anomaliesCount.toLocaleString()}</div>
+              <div class="text-[11px] text-slate-500 mt-0.5">Awaiting Statutory Verification</div>
             </div>
             <div class="flex items-center justify-between text-[11px] pt-1 border-t border-slate-100">
-              <span class="font-mono text-[#a73a00] font-bold">112 Stamp Discrepancies</span>
-              <span class="font-mono text-slate-400">State API</span>
+              <span class="font-mono text-[#a73a00] font-bold">${(kpis.document_validity_critical || 0)} Expiry Critical</span>
+              <a href="https://documentverify-two.vercel.app/" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" class="text-[10px] font-semibold text-[#a73a00] hover:text-[#8f3200] flex items-center gap-0.5" title="Open Document Verification Demo in new tab">
+                <span>Verification Demo</span>
+                <span class="material-symbols-outlined text-[12px]">open_in_new</span>
+              </a>
             </div>
           </div>
 
@@ -211,19 +225,19 @@ const OverviewModule = {
               <span class="material-symbols-outlined text-[#ba1a1a] text-[20px]">event_busy</span>
             </div>
             <div class="my-2">
-              <div class="font-headline text-2xl font-extrabold text-[#ba1a1a] tracking-tight">215</div>
+              <div class="font-headline text-2xl font-extrabold text-[#ba1a1a] tracking-tight">${atRiskCount.toLocaleString()}</div>
               <div class="flex items-center gap-1 mt-0.5">
                 <span class="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-slate-100 text-slate-700">&lt; 60 Days Expiry</span>
               </div>
             </div>
             <div class="flex items-center justify-between text-[11px] pt-1 border-t border-slate-100">
-              <span class="text-slate-600">FDR / Lease Delinquency</span>
-              <span class="font-mono text-[10px] font-bold text-[#ba1a1a] bg-[#ffdad6] px-1.5 py-0.2 rounded">Auto-Notice</span>
+              <span class="text-slate-600">Pending Actions</span>
+              <span class="font-mono text-[10px] font-bold text-[#ba1a1a] bg-[#ffdad6] px-1.5 py-0.2 rounded">${(kpis.undertakings_breached || 0)} Breached</span>
             </div>
           </div>
         </div>
 
-        <!-- Active Sovereign Case Banner (ABC Institute Quick Demonstration) -->
+        <!-- Active Priority Regulatory Advisory Banner -->
         <div class="bg-[#eaedff]/60 rounded-xl p-3.5 sm:p-4 border border-[#dae2fd] shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
           <div class="flex items-start gap-3">
             <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#0f284e] text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5 sm:mt-0">
@@ -231,12 +245,12 @@ const OverviewModule = {
             </div>
             <div class="space-y-1">
               <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                <span class="font-headline font-bold text-xs sm:text-sm text-[#001332]">Demonstration Case Focus: ABC Institute of Technology & Management</span>
-                <span class="font-mono text-[10px] sm:text-[11px] px-2 py-0.5 rounded bg-white text-[#001332] font-bold border border-slate-200">PID: 1-43890219</span>
-                <span class="text-[9px] sm:text-[10px] px-2 py-0.5 rounded bg-[#ffdad6] text-[#93000a] font-bold">Coordinated Injunction</span>
+                <span class="font-headline font-bold text-xs sm:text-sm text-[#001332]">Priority Regulatory Attention: Gurugram Institute of Technology & Management</span>
+                <span class="font-mono text-[10px] sm:text-[11px] px-2 py-0.5 rounded bg-white text-[#001332] font-bold border border-slate-200">PID: 1-10482931</span>
+                <span class="text-[9px] sm:text-[10px] px-2 py-0.5 rounded bg-[#ffdad6] text-[#93000a] font-bold">Active Coordinated Review</span>
               </div>
               <p class="text-[11px] sm:text-xs text-slate-600 leading-relaxed">
-                Registered land deed lease expires 31-March-2026. Concurrently flagged under PGRC Grievance #GR-2026-904 for unauthorized mezzanine construction. Approval grant is systematically frozen across Scrutiny Bureau (RB).
+                Registered land deed lease expires 31-March-2027. Concurrently flagged under PGRC Grievance #GR-2026-904 for infrastructure expansion scrutiny. Clearance pending review across Regulation Bureau (RB).
               </p>
             </div>
           </div>

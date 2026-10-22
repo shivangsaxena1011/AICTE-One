@@ -5,6 +5,49 @@ from typing import Optional, List, Dict, Any
 from datetime import date, datetime
 from pydantic import BaseModel, Field, ConfigDict
 
+# Auth & Identity Schemas
+class LoginRequest(BaseModel):
+    username: str = Field(..., description="Email or Username")
+    password: str = Field(..., description="Plaintext password")
+    mfa_code: Optional[str] = None
+
+class UserResponse(BaseModel):
+    id: str
+    username: str
+    email: str
+    full_name: str
+    role: str
+    department: Optional[str] = None
+    institution_id: Optional[str] = None
+    phone: Optional[str] = None
+    is_active: bool
+    is_mfa_enabled: bool = False
+    permissions: List[str] = []
+    created_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int
+    user: UserResponse
+
+class PasswordResetRequest(BaseModel):
+    account: str = Field(..., description="Email or Username")
+
+class PasswordResetConfirm(BaseModel):
+    token: str
+    new_password: str
+
+class MFASetupResponse(BaseModel):
+    secret: str
+    provisioning_uri: str
+    message: str
+
+class MFAVerifyRequest(BaseModel):
+    code: str
+
 # Institution Schemas
 class InstitutionBase(BaseModel):
     name: str
@@ -49,7 +92,10 @@ class ApplicationBase(BaseModel):
     category: str
     type: str
     academic_year: Optional[str] = "2026-2027"
+    route_type: Optional[str] = "SCRUTINY_EVC"
+    workflow_definition_id: Optional[str] = None
     current_stage: Optional[str] = "Preliminary validation"
+    stage_code: Optional[str] = "PRELIMINARY_VALIDATION"
     status: Optional[str] = "New submission"
     owner: Optional[str] = "Unassigned"
     progress: Optional[int] = 10
@@ -62,38 +108,168 @@ class ApplicationCreate(ApplicationBase):
     pass
 
 class ApplicationStageTransition(BaseModel):
-    next_stage: str
-    status: str
-    actor: str
+    next_stage: Optional[str] = None
+    stage_code: Optional[str] = None
+    status: Optional[str] = "In review"
+    actor: Optional[str] = None
     remarks: Optional[str] = None
     deficiencies: Optional[List[str]] = []
+    idempotency_key: Optional[str] = None
+    bypass_prereq_override: Optional[bool] = False
 
 class ApplicationResponse(ApplicationBase):
     id: str
     institution_name: Optional[str] = None
     permanent_id: Optional[str] = None
+    workflow_version: Optional[int] = 1
+    stage_due_date: Optional[date] = None
+    is_paused: Optional[bool] = False
+    is_escalated: Optional[bool] = False
+    escalation_level: Optional[int] = 0
     submitted_at: Optional[date] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 
+# Workflow Definition Schemas
+class WorkflowStageConfig(BaseModel):
+    stage_code: str
+    stage_name: str
+    sequence_order: int
+    allowed_transitions: List[str]
+    required_roles: List[str]
+    prerequisites: Optional[List[str]] = []
+    sla_days: Optional[int] = 7
+    is_terminal: Optional[bool] = False
+
+class WorkflowDefinitionCreate(BaseModel):
+    name: str
+    code: str
+    category: Optional[str] = "Technical"
+    academic_year: Optional[str] = "2026-2027"
+    route_type: str
+    stages: List[WorkflowStageConfig]
+    description: Optional[str] = None
+
+class WorkflowDefinitionResponse(BaseModel):
+    id: str
+    name: str
+    code: str
+    category: str
+    academic_year: str
+    route_type: str
+    version: int
+    is_active: bool
+    stages_config: str
+    created_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
 # EVC Schemas
 class EVCCreate(BaseModel):
     application_id: str
-    institution_id: str
+    institution_id: Optional[str] = None
     visit_type: Optional[str] = "Physical Visit"
     scheduled_date: date
     committee_chair: str
+    convener: Optional[str] = None
     committee_members: Optional[str] = None
+    expert_members: Optional[List[str]] = None
+    conflicts_declared: Optional[bool] = False
     observations: Optional[str] = None
     remarks: Optional[str] = None
+
+class EVCCompleteRequest(BaseModel):
+    recommendation: str  # Recommended, Not Recommended, Conditional
+    observations: str
+    remarks: Optional[str] = None
+    checklist_findings: Optional[Dict[str, Any]] = None
+    geo_latitude: Optional[float] = None
+    geo_longitude: Optional[float] = None
 
 class EVCResponse(EVCCreate):
     id: str
     status: str
     report_submitted: bool
+    convener: Optional[str] = None
+    recommendation: Optional[str] = None
     created_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+# Undertakings Schemas
+class UndertakingCreate(BaseModel):
+    institution_id: str
+    application_id: Optional[str] = None
+    undertaking_type: str
+    condition_ref: str
+    description: Optional[str] = None
+    statutory_deadline: date
+
+class UndertakingReviewRequest(BaseModel):
+    decision: str  # "Accept", "Reject"
+    review_notes: str
+
+class UndertakingResponse(BaseModel):
+    id: str
+    institution_id: str
+    application_id: Optional[str] = None
+    undertaking_type: str
+    condition_ref: str
+    description: Optional[str] = None
+    statutory_deadline: date
+    status: str
+    evidence_file: Optional[str] = None
+    evidence_submitted_at: Optional[datetime] = None
+    review_notes: Optional[str] = None
+    reviewed_by: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+# Document Validity Schemas
+class DocumentValidityCreate(BaseModel):
+    institution_id: str
+    document_id: Optional[str] = None
+    document_type: str
+    document_ref_number: str
+    issuing_authority: Optional[str] = None
+    issue_date: date
+    expiry_date: date
+    advance_warning_days: Optional[int] = 60
+
+class DocumentValidityResponse(BaseModel):
+    id: str
+    institution_id: str
+    document_id: Optional[str] = None
+    document_type: str
+    document_ref_number: str
+    issuing_authority: Optional[str] = None
+    issue_date: date
+    expiry_date: date
+    advance_warning_days: int
+    status: str
+    renewal_application_ref: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+# Escalation Event Schemas
+class EscalationResponse(BaseModel):
+    id: str
+    application_id: Optional[str] = None
+    institution_id: str
+    entity_type: str
+    entity_id: str
+    escalation_level: int
+    trigger_reason: str
+    escalated_to_role: str
+    status: str
+    resolution_notes: Optional[str] = None
+    created_at: Optional[datetime] = None
+    resolved_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -238,3 +414,82 @@ class AuditLogResponse(BaseModel):
     changes_json: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+# Phase 3: Correction Requests & Import Schemas
+class InstitutionCorrectionCreate(BaseModel):
+    reported_by: str
+    contact_email: str
+    field_name: str
+    proposed_value: str
+    rationale: str
+    evidence_file: Optional[str] = None
+
+class InstitutionCorrectionReview(BaseModel):
+    decision: str  # "Approve" or "Reject"
+    review_notes: str
+
+class InstitutionCorrectionResponse(BaseModel):
+    id: str
+    institution_id: str
+    reported_by: str
+    contact_email: str
+    field_name: str
+    current_value: Optional[str] = None
+    proposed_value: str
+    evidence_file: Optional[str] = None
+    rationale: str
+    status: str
+    review_notes: Optional[str] = None
+    reviewed_by: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+class ImportPreviewRequest(BaseModel):
+    file_path: Optional[str] = None
+    sample_limit: Optional[int] = 15
+
+class ImportConfirmRequest(BaseModel):
+    file_path: Optional[str] = None
+    batch_limit: Optional[int] = None
+
+# Phase 4: Document Intelligence & Forensic Schemas
+class DocumentReviewRequest(BaseModel):
+    action: str  # CONFIRM_MATCH, CORRECT_FIELDS, DISMISS_FLAG, REQUEST_MORE_EVIDENCE, RECORD_OFFICIAL_FINDING
+    justification: str
+    field_corrections: Optional[Dict[str, Any]] = None
+    official_finding: Optional[str] = None
+
+class DocumentReviewResponse(BaseModel):
+    document_id: str
+    action: str
+    previous_status: Optional[str] = None
+    new_status: str
+    reviewed_by: str
+    reviewed_at: datetime
+    justification: str
+
+class ComplaintTriageRequest(BaseModel):
+    complaint_id: Optional[str] = None
+    institution_id: Optional[str] = None
+    summary: str
+    details: Optional[str] = None
+    category: Optional[str] = None
+
+class ComplaintTriageResponse(BaseModel):
+    suggested_bureau: str
+    suggested_category: str
+    recommended_urgency: str  # Critical, High, Medium, Low
+    urgency_reasoning: str
+    extracted_entities: Dict[str, Any]
+    missing_mandatory_information: List[str]
+    potential_duplicate_cases: List[Dict[str, Any]]
+    objective_summary: str
+    statutory_disclaimer: str
+
+class RiskRecommendationActionRequest(BaseModel):
+    action: str  # ACCEPT, DISMISS, CORRECT
+    notes: str
+    corrected_data: Optional[Dict[str, Any]] = None
+

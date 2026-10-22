@@ -108,9 +108,9 @@
           <div>
             <div class="flex items-center gap-1.5">
               <span class="text-base font-extrabold tracking-tight text-white font-headline">AICTE ONE</span>
-              <span class="bg-[#fd651e] text-white text-[9px] font-bold px-1.5 py-0.2 rounded font-mono">SIH 2026</span>
+              <span class="bg-[#0f284e] border border-[#223c68] text-slate-200 text-[9px] font-semibold px-1.5 py-0.2 rounded font-mono uppercase tracking-wider">National Portal</span>
             </div>
-            <div class="text-[10px] text-slate-400 font-medium">Ministry of Education, GoI</div>
+            <div class="text-[10px] text-slate-400 font-medium">All India Council for Technical Education · MoE, GoI</div>
           </div>
         </div>
         
@@ -163,10 +163,16 @@
             <span>Evidence & Oversight</span>
           </div>
           <div class="space-y-1">
-            <a href="#/verification" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-md font-medium text-slate-300 hover:text-white hover:bg-[#0f284e] transition-all" data-route="verification">
-              <span class="material-symbols-outlined text-[18px] text-[#7a90bc]">verified_user</span>
-              <span>7. Document Verification</span>
-            </a>
+            <div class="flex items-center justify-between group">
+              <a href="#/verification" class="nav-item flex-1 flex items-center gap-2.5 px-3 py-2 rounded-md font-medium text-slate-300 hover:text-white hover:bg-[#0f284e] transition-all" data-route="verification">
+                <span class="material-symbols-outlined text-[18px] text-[#7a90bc]">verified_user</span>
+                <span>7. Document Verification</span>
+              </a>
+              <a href="https://documentverify-two.vercel.app/" target="_blank" rel="noopener noreferrer" title="Open Document Verification Demo" class="px-1.5 py-0.5 text-[9px] font-mono font-bold uppercase bg-[#a73a00] hover:bg-[#8f3200] text-white rounded transition-colors mr-2 flex items-center gap-0.5 shadow-xs">
+                <span>Demo</span>
+                <span class="material-symbols-outlined text-[10px]">open_in_new</span>
+              </a>
+            </div>
             <a href="#/compliance" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-md font-medium text-slate-300 hover:text-white hover:bg-[#0f284e] transition-all" data-route="compliance">
               <span class="material-symbols-outlined text-[18px] text-[#7a90bc]">rule</span>
               <span>8. Regulatory Compliance</span>
@@ -312,19 +318,21 @@
           </div>
         </div>
 
-        <!-- Demonstration Active Case Telemetry Context Strip -->
-        <div class="px-3 sm:px-6 py-1.5 bg-[#eaedff]/60 border-t border-[#dae2fd] flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 text-[11px] sm:text-xs">
-          <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+        <!-- Active Governance & Institutional Grid Telemetry Context Strip -->
+        <div id="header-context-strip" class="px-3 sm:px-6 py-1.5 bg-[#eaedff]/60 border-t border-[#dae2fd] flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 text-[11px] sm:text-xs">
+          <div id="header-context-anchor" class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
             <span class="material-symbols-outlined text-[#a73a00] text-[16px] shrink-0">corporate_fare</span>
-            <span class="font-semibold text-[#001332]">Case Anchor:</span>
-            <span class="text-slate-700 font-medium truncate max-w-[180px] sm:max-w-none">ABC Institute of Tech</span>
-            <span class="font-mono text-slate-500 text-[10px] sm:text-[11px]">[PID: 1-43890219]</span>
+            <span class="font-semibold text-[#001332]">Regulatory Grid:</span>
+            <span class="text-slate-700 font-medium truncate max-w-[180px] sm:max-w-none">Academic Cycle 2026–27</span>
+            <span class="font-mono text-slate-500 text-[10px] sm:text-[11px]">[8,842 Master Records]</span>
           </div>
-          <div class="flex flex-wrap items-center gap-1 sm:gap-2">
-            <span class="px-1.5 sm:px-2 py-0.5 rounded bg-[#ffdad6] text-[#93000a] font-semibold text-[9px] sm:text-[10px]">Stage 2 Deficiency</span>
-            <span class="px-1.5 sm:px-2 py-0.5 rounded bg-[#ffdbce] text-[#571a00] font-semibold text-[9px] sm:text-[10px]">Overlap Flagged</span>
-            <span class="hidden sm:inline px-2 py-0.5 rounded bg-[#eaedff] text-[#001332] font-semibold text-[10px] border border-[#dae2fd]">Lease: 42d</span>
-            <span class="px-1.5 sm:px-2 py-0.5 rounded bg-[#002f1e] text-[#23a274] font-mono text-[9px] sm:text-[10px] font-bold">94.2% Integrity</span>
+          <div id="header-context-badges" class="flex flex-wrap items-center gap-1 sm:gap-2">
+            <span class="px-1.5 sm:px-2 py-0.5 rounded bg-[#002f1e] text-[#23a274] font-semibold text-[9px] sm:text-[10px] flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              Live Regulatory Grid
+            </span>
+            <span class="px-1.5 sm:px-2 py-0.5 rounded bg-[#eaedff] text-[#001332] font-semibold text-[10px] border border-[#dae2fd]">APH 2026–27 Rules</span>
+            <span class="px-1.5 sm:px-2 py-0.5 rounded bg-white text-[#a73a00] font-mono text-[9px] sm:text-[10px] font-bold border border-slate-200">Zero-Tamper Audit</span>
           </div>
         </div>
       </header>

@@ -35,12 +35,14 @@ const App = {
     'settings': () => (window.SettingsModule || SettingsModule)
   },
 
+  currentUser: null,
+
   async init() {
-    this.initRole();
+    await API.checkBackendHealth();
+    await this.initRole();
     this.setupNavigation();
     this.setupGlobalSearch();
     this.setupModals();
-    await API.checkBackendHealth();
     this.updateBackendStatusIndicator();
     this.updateNotificationBadge();
 
@@ -65,37 +67,70 @@ const App = {
       }
     });
 
-    console.log('AICTE ONE Platform initialized in dual-mode.');
+    console.log('AICTE ONE Platform initialized with individual authentication and RBAC.');
   },
 
-  initRole() {
-    const saved = localStorage.getItem('aicte_current_role');
-    if (saved) {
-      try {
-        this.currentRole = JSON.parse(saved);
-      } catch (e) {
-        this.currentRole = (window.SettingsModule && SettingsModule.roles) ? SettingsModule.roles[0] : null;
+  async initRole() {
+    if (API.isBackendConnected()) {
+      const user = await API.getCurrentUser();
+      if (user) {
+        this.currentUser = user;
+        this.currentRole = {
+          id: user.role,
+          name: user.full_name,
+          email: user.email,
+          bureau: user.department || user.role,
+          perms: (user.permissions || []).join(', ')
+        };
+      } else {
+        // Fallback: check saved persona or default to Public Visitor
+        this.currentUser = null;
+        this.currentRole = {
+          id: 'PUBLIC_VISITOR',
+          name: 'Public Visitor',
+          email: 'citizen@bharat.in',
+          bureau: 'Public Access',
+          perms: 'Public institutional directory & approval verification'
+        };
       }
-    }
-    if (!this.currentRole) {
-      this.currentRole = {
-        id: 'ADMIN',
-        name: 'System Administrator',
-        email: 'admin@aicte-india.org',
-        bureau: 'Central Administration',
-        perms: 'Full Administrative & Configuration Access'
-      };
+    } else {
+      const saved = localStorage.getItem('aicte_current_role');
+      if (saved) {
+        try {
+          this.currentRole = JSON.parse(saved);
+        } catch (e) {
+          this.currentRole = (window.SettingsModule && SettingsModule.roles) ? SettingsModule.roles[0] : null;
+        }
+      }
+      if (!this.currentRole) {
+        this.currentRole = {
+          id: 'ADMIN',
+          name: 'System Administrator',
+          email: 'admin@aicte-india.org',
+          bureau: 'Central Administration',
+          perms: 'Full Administrative & Configuration Access'
+        };
+      }
     }
     this.updateRoleDisplay();
   },
 
   getCurrentRole() {
+    if (this.currentUser) {
+      return {
+        id: this.currentUser.role,
+        name: this.currentUser.full_name,
+        email: this.currentUser.email,
+        bureau: this.currentUser.department || this.currentUser.role,
+        perms: (this.currentUser.permissions || []).join(', ')
+      };
+    }
     return this.currentRole || {
-      id: 'ADMIN',
-      name: 'System Administrator',
-      email: 'admin@aicte-india.org',
-      bureau: 'Central Administration',
-      perms: 'Full Administrative & Configuration Access'
+      id: 'PUBLIC_VISITOR',
+      name: 'Public Visitor',
+      email: 'citizen@bharat.in',
+      bureau: 'Public Access',
+      perms: 'Public Directory & Search'
     };
   },
 
@@ -107,12 +142,296 @@ const App = {
 
   updateRoleDisplay() {
     const el = document.getElementById('header-role-name');
-    if (el && this.currentRole) {
-      el.textContent = this.currentRole.name;
-    }
     const emailEl = document.getElementById('header-role-email');
-    if (emailEl && this.currentRole) {
-      emailEl.textContent = this.currentRole.email;
+    const anchorEl = document.getElementById('header-context-anchor');
+    const badgesEl = document.getElementById('header-context-badges');
+
+    if (this.currentUser) {
+      if (el) el.textContent = this.currentUser.full_name;
+      if (emailEl) emailEl.innerHTML = `<span class="text-emerald-700 font-semibold">${this.currentUser.role}</span> • Sign Out`;
+
+      if (anchorEl) {
+        if (this.currentUser.role === 'INSTITUTE_HEAD') {
+          anchorEl.innerHTML = `
+            <span class="material-symbols-outlined text-[#a73a00] text-[16px] shrink-0">corporate_fare</span>
+            <span class="font-semibold text-[#001332]">Bound Institution:</span>
+            <span class="text-slate-700 font-medium truncate max-w-[220px]">Gurugram Institute of Technology & Management</span>
+            <span class="font-mono text-slate-500 text-[10px] sm:text-[11px]">[PID: 1-10482931]</span>
+          `;
+        } else {
+          anchorEl.innerHTML = `
+            <span class="material-symbols-outlined text-[#a73a00] text-[16px] shrink-0">verified_user</span>
+            <span class="font-semibold text-[#001332]">Statutory Jurisdiction:</span>
+            <span class="text-slate-700 font-medium truncate max-w-[220px]">${this.currentUser.department || 'Central Governance Bureau'}</span>
+            <span class="font-mono text-slate-500 text-[10px] sm:text-[11px]">[Active Session 2026–27]</span>
+          `;
+        }
+      }
+      if (badgesEl) {
+        badgesEl.innerHTML = `
+          <span class="px-1.5 sm:px-2 py-0.5 rounded bg-[#002f1e] text-[#23a274] font-semibold text-[9px] sm:text-[10px] flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            Authenticated Session
+          </span>
+          <span class="px-1.5 sm:px-2 py-0.5 rounded bg-[#eaedff] text-[#001332] font-semibold text-[10px] border border-[#dae2fd]">Role: ${this.currentUser.role}</span>
+          <span class="px-1.5 sm:px-2 py-0.5 rounded bg-white text-[#a73a00] font-mono text-[9px] sm:text-[10px] font-bold border border-slate-200">Audit Active</span>
+        `;
+      }
+    } else if (this.currentRole) {
+      if (el) el.textContent = this.currentRole.name;
+      if (emailEl) emailEl.innerHTML = `<span class="text-slate-500">${this.currentRole.bureau || 'Public'}</span> • <span class="text-primary font-bold">Sign In</span>`;
+      if (anchorEl) {
+        anchorEl.innerHTML = `
+          <span class="material-symbols-outlined text-[#a73a00] text-[16px] shrink-0">corporate_fare</span>
+          <span class="font-semibold text-[#001332]">Regulatory Grid:</span>
+          <span class="text-slate-700 font-medium truncate max-w-[220px]">Academic Cycle 2026–27</span>
+          <span class="font-mono text-slate-500 text-[10px] sm:text-[11px]">[8,842 Master Records]</span>
+        `;
+      }
+    }
+  },
+
+  async authenticatePersona(username, password = 'AicteOne@2026!', mfaCode = null) {
+    const data = await API.login(username, password, mfaCode);
+    this.currentUser = data.user;
+    this.currentRole = {
+      id: data.user.role,
+      name: data.user.full_name,
+      email: data.user.email,
+      bureau: data.user.department || data.user.role,
+      perms: (data.user.permissions || []).join(', ')
+    };
+    this.updateRoleDisplay();
+    this.closeModal();
+    this.toast(`Authenticated as ${data.user.full_name} (${data.user.role})`, 'success');
+    return data;
+  },
+
+  async logout() {
+    await API.logout();
+    this.currentUser = null;
+    this.currentRole = {
+      id: 'PUBLIC_VISITOR',
+      name: 'Public Visitor',
+      email: 'citizen@bharat.in',
+      bureau: 'Public Access',
+      perms: 'Public Directory & Search'
+    };
+    this.updateRoleDisplay();
+    this.toast('Signed out successfully. Session invalidated.', 'info');
+    this.navigate('overview');
+  },
+
+  showLoginModal(targetRoute = null) {
+    const bodyHtml = `
+      <div class="space-y-4 text-xs">
+        <div class="p-3 bg-navy-50 rounded-lg border border-navy-100 flex items-center justify-between">
+          <div>
+            <div class="font-bold text-navy-900">Official AICTE Single Sign-On</div>
+            <div class="text-[11px] text-slate-500">Government of India • Ministry of Education</div>
+          </div>
+          <span class="badge badge-success text-[10px]">Bcrypt Secured</span>
+        </div>
+
+        <form id="app-login-form" onsubmit="event.preventDefault(); App.handleLoginFormSubmit('${targetRoute || ''}')" class="space-y-3">
+          <div id="login-error-box" class="hidden p-2.5 rounded bg-red-50 border border-red-200 text-red-700 text-xs font-medium"></div>
+
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Username or Registered Email *</label>
+            <input type="text" id="login-input-username" class="input w-full text-xs" placeholder="e.g. superadmin, principal.gitm, or email" required />
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block font-semibold text-slate-700">Password *</label>
+              <a href="javascript:void(0)" class="text-primary hover:underline text-[11px]" onclick="App.showPasswordResetModal()">Forgot Password?</a>
+            </div>
+            <input type="password" id="login-input-password" class="input w-full text-xs" placeholder="Enter your individual password" required />
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">MFA Verification Code (Optional / Privileged Accounts)</label>
+            <input type="text" id="login-input-mfa" class="input w-full text-xs font-mono" placeholder="6-digit TOTP / demo PIN (e.g. 123456)" />
+          </div>
+
+          <div class="pt-2">
+            <button type="submit" id="login-submit-btn" class="btn btn-primary w-full text-xs font-bold py-2 justify-center flex items-center gap-1.5">
+              <span>Sign In to Platform</span>
+            </button>
+          </div>
+        </form>
+
+        <details class="border-t border-slate-200 pt-3 text-slate-500">
+          <summary class="text-[11px] font-semibold text-slate-500 cursor-pointer hover:text-slate-700 select-none">
+            Authorized Local Test Accounts (Dev / Audit Inspection)
+          </summary>
+          <div class="grid grid-cols-2 gap-2 mt-2">
+            <button type="button" class="btn btn-secondary text-[11px] text-left p-2 justify-start truncate" onclick="App.fillDemoLogin('superadmin', 'AicteOne@2026!')">
+              🛡️ Super Administrator
+            </button>
+            <button type="button" class="btn btn-secondary text-[11px] text-left p-2 justify-start truncate" onclick="App.fillDemoLogin('security.officer', 'AicteOne@2026!')">
+              🔒 Security Officer
+            </button>
+            <button type="button" class="btn btn-secondary text-[11px] text-left p-2 justify-start truncate" onclick="App.fillDemoLogin('compliance.officer', 'AicteOne@2026!')">
+              📋 Policy & Compliance
+            </button>
+            <button type="button" class="btn btn-secondary text-[11px] text-left p-2 justify-start truncate" onclick="App.fillDemoLogin('complaint.officer', 'AicteOne@2026!')">
+              ⚖️ Complaint Officer
+            </button>
+            <button type="button" class="btn btn-secondary text-[11px] text-left p-2 justify-start truncate" onclick="App.fillDemoLogin('principal.gitm', 'AicteOne@2026!')">
+              🏛️ Institute Head (GITM)
+            </button>
+            <button type="button" class="btn btn-secondary text-[11px] text-left p-2 justify-start truncate" onclick="App.fillDemoLogin('student.aarav', 'AicteOne@2026!')">
+              🎓 Student Complainant
+            </button>
+          </div>
+        </details>
+      </div>
+    `;
+
+    this.openModal('Sign In to AICTE ONE', bodyHtml, `
+      <button class="btn btn-secondary text-xs" onclick="App.closeModal()">Cancel</button>
+    `);
+  },
+
+  fillDemoLogin(username, password) {
+    const uInput = document.getElementById('login-input-username');
+    const pInput = document.getElementById('login-input-password');
+    if (uInput) uInput.value = username;
+    if (pInput) pInput.value = password;
+  },
+
+  async handleLoginFormSubmit(targetRoute) {
+    const uInput = document.getElementById('login-input-username');
+    const pInput = document.getElementById('login-input-password');
+    const mInput = document.getElementById('login-input-mfa');
+    const errBox = document.getElementById('login-error-box');
+    const submitBtn = document.getElementById('login-submit-btn');
+
+    if (!uInput || !pInput) return;
+    const username = uInput.value.trim();
+    const password = pInput.value;
+    const mfa = mInput ? mInput.value.trim() : null;
+
+    if (errBox) errBox.classList.add('hidden');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>Verifying credentials...</span>';
+    }
+
+    try {
+      await this.authenticatePersona(username, password, mfa || null);
+      if (targetRoute) {
+        this.navigate(targetRoute);
+      }
+    } catch (err) {
+      if (errBox) {
+        errBox.textContent = err.message || 'Invalid username or password.';
+        errBox.classList.remove('hidden');
+      }
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>Sign In to Platform</span>';
+      }
+    }
+  },
+
+  showPasswordResetModal() {
+    const bodyHtml = `
+      <div class="space-y-4 text-xs">
+        <p class="text-slate-600">
+          Enter your registered username or official email address to generate a single-use, time-limited password recovery link (valid for 15 minutes).
+        </p>
+
+        <form id="password-reset-request-form" onsubmit="event.preventDefault(); App.handleResetRequestSubmit()" class="space-y-3">
+          <div id="reset-msg-box" class="hidden p-2.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium"></div>
+
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Username or Email *</label>
+            <input type="text" id="reset-account-input" class="input w-full text-xs" placeholder="e.g. principal.gitm or principal@gitm.ac.in" required />
+          </div>
+
+          <div id="reset-token-display-box" class="hidden p-3 bg-slate-50 border border-slate-200 rounded space-y-2">
+            <div class="font-bold text-navy-900 text-xs">Password Reset Token Issued:</div>
+            <div id="reset-token-value" class="p-2 bg-white border border-slate-300 font-mono text-xs break-all rounded"></div>
+            <div class="pt-2">
+              <label class="block font-semibold text-slate-700 mb-1">New Password (Min 8 Characters) *</label>
+              <input type="password" id="reset-new-password" class="input w-full text-xs" placeholder="Enter new secure password" />
+            </div>
+            <button type="button" class="btn btn-primary w-full text-xs font-bold mt-2" onclick="App.handleConfirmPasswordReset()">
+              Update Password
+            </button>
+          </div>
+
+          <div id="reset-request-btn-box">
+            <button type="submit" class="btn btn-primary w-full text-xs font-bold py-2">
+              Generate Password Recovery Token
+            </button>
+          </div>
+        </form>
+      </div>
+    `;
+
+    this.openModal('Password Recovery', bodyHtml, `
+      <button class="btn btn-secondary text-xs" onclick="App.showLoginModal()">Back to Sign In</button>
+      <button class="btn btn-secondary text-xs" onclick="App.closeModal()">Close</button>
+    `);
+  },
+
+  async handleResetRequestSubmit() {
+    const input = document.getElementById('reset-account-input');
+    const msgBox = document.getElementById('reset-msg-box');
+    const tokenBox = document.getElementById('reset-token-display-box');
+    const tokenVal = document.getElementById('reset-token-value');
+    const btnBox = document.getElementById('reset-request-btn-box');
+
+    if (!input) return;
+    const account = input.value.trim();
+
+    try {
+      const res = await API.requestPasswordReset(account);
+      if (msgBox) {
+        msgBox.textContent = res.message;
+        msgBox.classList.remove('hidden');
+      }
+      if (res.token && tokenBox && tokenVal) {
+        tokenVal.textContent = res.token;
+        tokenBox.classList.remove('hidden');
+        if (btnBox) btnBox.classList.add('hidden');
+      }
+    } catch (e) {
+      if (msgBox) {
+        msgBox.textContent = e.message || 'Error requesting password reset.';
+        msgBox.className = 'p-2.5 rounded bg-red-50 border border-red-200 text-red-700 text-xs font-medium';
+        msgBox.classList.remove('hidden');
+      }
+    }
+  },
+
+  async handleConfirmPasswordReset() {
+    const tokenVal = document.getElementById('reset-token-value');
+    const newPassInput = document.getElementById('reset-new-password');
+    const msgBox = document.getElementById('reset-msg-box');
+
+    if (!tokenVal || !newPassInput) return;
+    const token = tokenVal.textContent.trim();
+    const newPassword = newPassInput.value;
+
+    if (newPassword.length < 8) {
+      alert('Password must be at least 8 characters long.');
+      return;
+    }
+
+    try {
+      const res = await API.confirmPasswordReset(token, newPassword);
+      this.toast('Password updated successfully! Please log in.', 'success');
+      this.showLoginModal();
+    } catch (e) {
+      if (msgBox) {
+        msgBox.textContent = e.message || 'Error updating password.';
+        msgBox.className = 'p-2.5 rounded bg-red-50 border border-red-200 text-red-700 text-xs font-medium';
+        msgBox.classList.remove('hidden');
+      }
     }
   },
 
@@ -143,6 +462,14 @@ const App = {
     if (!this.modules[route]) {
       console.warn(`Module '${route}' not found. Defaulting to overview.`);
       route = 'overview';
+    }
+
+    // Public vs Protected route check
+    const publicRoutes = ['overview', 'executive-intelligence', 'institutions', 'digitalTwin', 'digital-twin', 'digital_twin', 'institution-digital-twin', 'reports', 'settings'];
+    if (API.isBackendConnected() && !this.currentUser && !publicRoutes.includes(route)) {
+      this.toast('Authentication required to access officer or institutional workflow.', 'info');
+      this.showLoginModal(route);
+      return;
     }
 
     this.currentRoute = route;

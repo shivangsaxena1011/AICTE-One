@@ -1,31 +1,57 @@
 """
 Tasks & Action Queue Router
+Protected with RBAC & Multi-Institution Tenant Isolation
 """
 import uuid
 from typing import Optional
 from datetime import date, datetime
-from fastapi import APIRouter, Depends, HTTPException, Query, Form, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Form, Request, status
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
 from backend.database import get_db
-from backend.models import Task, Institution, AuditLog
+from backend.models import Task, Institution, AuditLog, User
 from backend.schemas import TaskCreate, TaskResponse
+from backend.auth import (
+    get_current_user, require_roles,
+    ROLE_SUPER_ADMIN, ROLE_SECURITY_OFFICER, ROLE_COMPLIANCE_OFFICER,
+    ROLE_COMPLAINT_OFFICER, ROLE_ANTI_RAGGING_OFFICER,
+    ROLE_INSTITUTE_HEAD, ROLE_STUDENT_COMPLAINANT, ROLE_PUBLIC_VISITOR
+)
 
 router = APIRouter(prefix="/api/tasks", tags=["Tasks"])
 
 @router.get("")
 def list_tasks(
     priority: Optional[str] = Query(None),
-    status: Optional[str] = Query(None),
+    status_filter: Optional[str] = Query(None, alias="status"),
     assigned_to: Optional[str] = Query(None),
+    user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    """
+    Lists action queue tasks scoped by RBAC and tenant isolation:
+    - Institute Heads see ONLY tasks for their own institution.
+    - Officers see statutory bureau tasks.
+    - Students and public visitors are denied access (403 Forbidden).
+    """
+    if user.role in {ROLE_STUDENT_COMPLAINANT, ROLE_PUBLIC_VISITOR}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access forbidden: Internal action queues are restricted to regulatory officers and authorized institutional representatives."
+        )
+
     query = db.query(Task)
+
+    if user.role == ROLE_INSTITUTE_HEAD:
+        if not user.institution_id:
+            return []
+        query = query.filter(Task.institution_id == user.institution_id)
+
     if priority:
         query = query.filter(Task.priority == priority)
-    if status:
-        query = query.filter(Task.status == status)
+    if status_filter:
+        query = query.filter(Task.status == status_filter)
     if assigned_to:
         query = query.filter(Task.assigned_to == assigned_to)
 
@@ -52,7 +78,14 @@ def list_tasks(
     return results
 
 @router.post("")
-def create_task(payload: TaskCreate, db: Session = Depends(get_db)):
+def create_task(
+    payload: TaskCreate,
+    user: User = Depends(require_roles(
+        ROLE_SUPER_ADMIN, ROLE_SECURITY_OFFICER, ROLE_COMPLIANCE_OFFICER,
+        ROLE_COMPLAINT_OFFICER, ROLE_ANTI_RAGGING_OFFICER
+    )),
+    db: Session = Depends(get_db)
+):
     new_id = f"TSK-2026-{uuid.uuid4().hex[:4].upper()}"
     task = Task(
         id=new_id,
@@ -61,8 +94,8 @@ def create_task(payload: TaskCreate, db: Session = Depends(get_db)):
         priority=payload.priority or "Medium",
         status="Pending",
         due_date=payload.due_date,
-        assigned_to=payload.assigned_to,
-        bureau=payload.bureau,
+        assigned_to=payload.assigned_to or user.full_name,
+        bureau=payload.bureau or user.department or "Central Bureau",
         institution_id=payload.institution_id,
         application_id=payload.application_id,
         complaint_id=payload.complaint_id,
@@ -74,8 +107,8 @@ def create_task(payload: TaskCreate, db: Session = Depends(get_db)):
 
     audit = AuditLog(
         id=f"AUD-{uuid.uuid4().hex[:6].upper()}",
-        actor="Task Engine",
-        role="Workflow Orchestrator",
+        actor=user.username,
+        role=user.role,
         action="Created Action Task",
         entity_type="Task",
         entity_id=task.id,
@@ -90,96 +123,53 @@ def create_task(payload: TaskCreate, db: Session = Depends(get_db)):
 async def update_task_status(
     id: str,
     request: Request,
-    status: Optional[str] = Form(None),
+    status_val: Optional[str] = Form(None, alias="status"),
     notes: Optional[str] = Form(None),
-    actor: Optional[str] = Form("Officer"),
+    actor: Optional[str] = Form(None),
+    user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     task = db.query(Task).filter(Task.id == id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
 
+    if user.role in {ROLE_STUDENT_COMPLAINANT, ROLE_PUBLIC_VISITOR}:
+        raise HTTPException(status_code=403, detail="Not authorized to update action tasks.")
+
+    if user.role == ROLE_INSTITUTE_HEAD:
+        if user.institution_id and user.institution_id != task.institution_id:
+            raise HTTPException(status_code=403, detail="Cross-institution task update denied.")
+
     content_type = request.headers.get("content-type", "")
-    req_status = status
+    req_status = status_val
     req_notes = notes
-    req_actor = actor
 
     if "application/json" in content_type:
         try:
             body = await request.json()
             if isinstance(body, dict):
                 req_status = body.get("status") or req_status
-                req_notes = body.get("resolution_notes") or body.get("notes") or req_notes
-                req_actor = body.get("actor") or req_actor
+                req_notes = body.get("notes") or body.get("resolution_notes") or req_notes
         except Exception:
             pass
 
     if not req_status:
-        req_status = "In Progress"
+        req_status = "Completed"
 
     old_status = task.status
     task.status = req_status
     if req_notes:
-        task.resolution_notes = f"{task.resolution_notes or ''}\n[{req_status}: {req_notes}]"
+        task.resolution_notes = req_notes
 
     audit = AuditLog(
         id=f"AUD-{uuid.uuid4().hex[:6].upper()}",
-        actor=req_actor,
-        role="Assigned Officer",
+        actor=user.username,
+        role=user.role,
         action="Updated Task Status",
         entity_type="Task",
         entity_id=task.id,
-        details=f"Updated status from '{old_status}' to '{req_status}'."
+        details=f"Transitioned task '{task.title}' from '{old_status}' to '{req_status}'."
     )
     db.add(audit)
     db.commit()
-    return {"message": f"Task status updated to {req_status}"}
-
-@router.post("/{id}/escalate")
-async def escalate_task(
-    id: str,
-    request: Request,
-    reason: Optional[str] = Form(None),
-    escalated_to: Optional[str] = Form("Bureau Head"),
-    actor: Optional[str] = Form("Officer"),
-    db: Session = Depends(get_db)
-):
-    task = db.query(Task).filter(Task.id == id).first()
-    if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
-
-    content_type = request.headers.get("content-type", "")
-    req_reason = reason
-    req_escalated_to = escalated_to
-    req_actor = actor
-
-    if "application/json" in content_type:
-        try:
-            body = await request.json()
-            if isinstance(body, dict):
-                req_reason = body.get("reason") or req_reason
-                req_escalated_to = body.get("escalated_to") or req_escalated_to
-                req_actor = body.get("actor") or req_actor
-        except Exception:
-            pass
-
-    if not req_reason:
-        req_reason = "Administrative escalation triggered"
-
-    task.priority = "Critical"
-    task.status = "Escalated"
-    task.assigned_to = req_escalated_to
-    task.resolution_notes = f"{task.resolution_notes or ''}\n[Escalated to {req_escalated_to}: {req_reason}]"
-
-    audit = AuditLog(
-        id=f"AUD-{uuid.uuid4().hex[:6].upper()}",
-        actor=req_actor,
-        role="Escalation Authority",
-        action="Escalated Action Task",
-        entity_type="Task",
-        entity_id=task.id,
-        details=f"Escalated task {task.id} to {req_escalated_to}. Reason: {req_reason}."
-    )
-    db.add(audit)
-    db.commit()
-    return {"message": f"Task escalated to {req_escalated_to}"}
+    return {"message": "Task updated successfully", "status": task.status}
