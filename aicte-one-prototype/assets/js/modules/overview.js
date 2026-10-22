@@ -211,8 +211,8 @@ const OverviewModule = {
             </div>
             <div class="flex items-center justify-between text-[11px] pt-1 border-t border-slate-100">
               <span class="font-mono text-[#a73a00] font-bold">${(kpis.document_validity_critical || 0)} Expiry Critical</span>
-              <a href="https://documentverify-two.vercel.app/" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" class="text-[10px] font-semibold text-[#a73a00] hover:text-[#8f3200] flex items-center gap-0.5" title="Open Document Verification Demo in new tab">
-                <span>Verification Demo</span>
+              <a href="https://documentverify-two.vercel.app/" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" class="text-[10px] font-semibold text-[#a73a00] hover:text-[#8f3200] flex items-center gap-0.5" title="Open Document Verification in new tab">
+                <span>Document Verification</span>
                 <span class="material-symbols-outlined text-[12px]">open_in_new</span>
               </a>
             </div>

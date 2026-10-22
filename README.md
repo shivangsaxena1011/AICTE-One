@@ -12,7 +12,7 @@
 > **"One Institution. One Connected Workflow. Evidence-Based Governance."**
 
 - **Live Production URL:** [https://aicte-one.vercel.app/](https://aicte-one.vercel.app/)
-- **Document Verification Demo:** [https://documentverify-two.vercel.app/](https://documentverify-two.vercel.app/)
+- **Document Verification:** [https://documentverify-two.vercel.app/](https://documentverify-two.vercel.app/)
 - **Repository:** [https://github.com/shivangsaxena1011/AICTE-One](https://github.com/shivangsaxena1011/AICTE-One)
 
 ---
@@ -66,7 +66,7 @@ AICTE ONE resolves critical institutional oversight bottlenecks across technical
    - Multimodal document ingestion with cryptographic SHA-256 fingerprinting.
    - Optical Character Recognition (OCR) extraction computing per-field confidence metrics.
    - Heuristic Rules Engine (Rules `A1` through `A10`) testing registered land ownership, fire safety NOC validity, building approval dates, approved intake ceilings, and FDR validity.
-   - Direct integration link to the live **[Document Verification Demo](https://documentverify-two.vercel.app/)** service.
+   - Direct integration link to the live **[Document Verification](https://documentverify-two.vercel.app/)** service.
    - **Crucial Governance Principle**: The platform clearly demarcates *"Extraction Confidence"* from *"Source Authentication"*, preventing automated adverse decisions without human review.
 
 4. **Institutional Compliance & Digital Twin 360°**:
@@ -100,7 +100,7 @@ AICTE ONE resolves critical institutional oversight bottlenecks across technical
 ### 5. Forensic Document Intelligence
 - **Deep File Validation:** Rejects disguised scripts using MIME checks and binary magic byte verification (`%PDF`, `\xFF\xD8\xFF`, `\x89PNG`).
 - **SHA-256 Deduplication:** Detects re-submitted or cross-institution recycled documents.
-- **Live Demo Bridge:** Dedicated interface button launching the standalone [AI Document Verification Demo](https://documentverify-two.vercel.app/).
+- **Live Demo Bridge:** Dedicated interface button launching the standalone [AI Document Verification](https://documentverify-two.vercel.app/).
 
 ### 6. Role-Based Access Control (RBAC) & Security Hardening
 - **8 Individual Statutory Roles:** Super Administrator, Security Officer, Compliance Officer, Complaint Officer, Anti-Ragging Officer, Institute Head, Student Complainant, and Public Visitor.
@@ -184,7 +184,7 @@ AICTE ONE delivers complete operational fidelity across all device form factors:
 | **4** | Core Operations | **Approval Applications** | Multi-type application register (EoA, New Institution, Intake Increase, Closure). |
 | **5** | Core Operations | **Scrutiny & Workflow** | 5-stage APH scrutiny stepper, deficiency checklist generator, 15-day applicant rectification window. |
 | **6** | Core Operations | **EVC Scheduling** | Expert Visit Committee visit scheduler, conflict-of-interest checker, GPS geofenced visit verification. |
-| **7** | Evidence & Oversight | **Document Verification** | Forensic OCR engine, SHA-256 seal verification, [External Verification Demo](https://documentverify-two.vercel.app/) link. |
+| **7** | Evidence & Oversight | **Document Verification** | Forensic OCR engine, SHA-256 seal verification, [External Document Verification](https://documentverify-two.vercel.app/) link. |
 | **8** | Evidence & Oversight | **Regulatory Compliance** | Time-bound compliance calendar tracking FDRs, land leases, NBA/NAAC accreditations, and disclosures. |
 | **9** | Evidence & Oversight | **Complaints & Grievances** | Central grievance intake (PGRC, CPGRAMS), whistleblower isolation, case transfer and disposal. |
 | **10** | Evidence & Oversight | **Cross-Bureau Clashes** | Overlap coordination workspace calculating correlation scores, concurrent inquiry flags, and joint hearings. |
