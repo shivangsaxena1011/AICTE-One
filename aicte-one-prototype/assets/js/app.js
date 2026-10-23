@@ -57,7 +57,9 @@ const App = {
       const param = parts.slice(1).join('/') || null;
       this.navigate(route || 'overview', param || null, false);
     } else {
-      this.navigate('overview', null, false);
+      if (this.currentUser || (typeof AuthGateway !== 'undefined' && AuthGateway.isJudgeDemo)) {
+        this.navigate('overview', null, false);
+      }
     }
 
     window.addEventListener('hashchange', () => {

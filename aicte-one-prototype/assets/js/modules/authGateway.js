@@ -230,6 +230,8 @@ const AuthGateway = {
   refreshCaptcha() {
     this.generateCaptcha();
     this.renderCaptchaCanvas();
+    const codeEl = document.getElementById('visual-captcha-text');
+    if (codeEl) codeEl.textContent = this.captchaCode;
     const input = document.getElementById('gateway-captcha-input');
     if (input) input.value = '';
   },
@@ -554,7 +556,7 @@ const AuthGateway = {
               <p class="text-xs text-purple-200/80 mt-0.5">Explore the complete prototype with pre-populated datasets across 8,800+ colleges, complaints, EVCs, and document verification.</p>
             </div>
           </div>
-          <button class="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer active:scale-95" onclick="AuthGateway.enterJudgeDemo()">
+          <button id="judge-demo-btn" class="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer active:scale-95" onclick="AuthGateway.enterJudgeDemo()">
             <span>Enter Judge Demo Mode</span>
             <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
           </button>
@@ -570,6 +572,8 @@ const AuthGateway = {
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
             ${this.ROLES.map(r => `
               <div 
+                id="role-card-${r.code.toLowerCase()}"
+                data-role="${r.code}"
                 onclick="AuthGateway.selectRole('${r.code}')"
                 class="group relative bg-[#0a1a36]/90 hover:bg-[#0f284e] border border-slate-700/60 hover:border-blue-500/80 rounded-xl p-4 transition-all duration-200 cursor-pointer shadow-md hover:shadow-blue-900/20 hover:-translate-y-0.5 flex flex-col justify-between"
               >
@@ -620,7 +624,7 @@ const AuthGateway = {
           
           <!-- Back / Change Role Header -->
           <div class="flex items-center justify-between mb-5 pb-3 border-b border-slate-800">
-            <button class="text-xs text-slate-400 hover:text-white flex items-center gap-1 cursor-pointer transition-colors" onclick="AuthGateway.changeRole()">
+            <button id="back-to-roles-btn" class="text-xs text-slate-400 hover:text-white flex items-center gap-1 cursor-pointer transition-colors" onclick="AuthGateway.changeRole()">
               <span class="material-symbols-outlined text-[16px]">arrow_back</span>
               <span>Change Role</span>
             </button>
@@ -693,8 +697,11 @@ const AuthGateway = {
               <div>
                 <label class="block text-xs font-semibold text-slate-300 mb-1">Visual Security Verification</label>
                 <div class="flex items-center gap-2 mb-2">
-                  <canvas id="visual-captcha-canvas" width="180" height="42" class="rounded-lg border border-slate-700 shadow-inner shrink-0"></canvas>
-                  <button type="button" class="btn sm btn-secondary text-xs flex items-center gap-1 shrink-0 py-2 px-2.5" onclick="AuthGateway.refreshCaptcha()" title="Refresh Security Code">
+                  <div class="relative shrink-0">
+                    <canvas id="visual-captcha-canvas" width="180" height="42" class="rounded-lg border border-slate-700 shadow-inner block"></canvas>
+                    <span id="visual-captcha-text" class="sr-only">${this.captchaCode}</span>
+                  </div>
+                  <button id="refresh-captcha-btn" type="button" class="btn sm btn-secondary text-xs flex items-center gap-1 shrink-0 py-2 px-2.5" onclick="AuthGateway.refreshCaptcha()" title="Refresh Security Code">
                     <span class="material-symbols-outlined text-[16px]">refresh</span>
                     <span>Refresh</span>
                   </button>

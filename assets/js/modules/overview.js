@@ -4,24 +4,37 @@
  */
 const OverviewModule = {
   async render() {
-    const metrics = await API.getDashboardMetrics();
-    const sum = metrics.summary || {
+    let metrics = {};
+    try {
+      metrics = (await API.getDashboardMetrics()) || {};
+    } catch (e) {
+      metrics = {};
+    }
+    const stageDist = (metrics && metrics.stage_distribution) ? metrics.stage_distribution : {};
+    const sum = (metrics && metrics.summary) || {
       institutions: 8842,
       applications: 8,
       pending_verification: 0,
       compliance_alerts: 1,
       overlapping_cases: 3
     };
-    const kpis = metrics.kpis || metrics;
+    const kpis = (metrics && (metrics.kpis || metrics)) || {};
     const totalAppsCount = (sum.applications || kpis.active_applications || 0);
-    const queueCount = ((kpis.evc_scheduled || 0) + (kpis.applications_in_active_stages || 0) || (metrics.stage_distribution && (metrics.stage_distribution['Scrutiny'] || 0)) || 2);
+    const queueCount = ((kpis.evc_scheduled || 0) + (kpis.applications_in_active_stages || 0) || (stageDist['Scrutiny'] || 0) || 2);
     const overlapsCount = (sum.overlapping_cases || kpis.high_priority_and_critical_cases || 0);
     const anomaliesCount = (sum.pending_verification || kpis.documents_awaiting_verification || 0);
     const atRiskCount = (sum.compliance_alerts || kpis.failed_or_overdue_compliance || 0);
 
     // Applications for the live pipeline table
-    const recentApps = await API.getApplications();
-    const appList = recentApps.items || recentApps.data || recentApps || [];
+    let recentApps = [];
+    try {
+      const resp = await API.getApplications();
+      recentApps = resp ? (resp.items || resp.data || resp || []) : [];
+      if (!Array.isArray(recentApps)) recentApps = [];
+    } catch (e) {
+      recentApps = [];
+    }
+    const appList = recentApps;
     const appRows = appList.slice(0, 6).map(a => `
       <tr class="hover:bg-slate-50/80 transition-colors border-b border-slate-100">
         <td class="py-3 px-3">
@@ -414,11 +427,11 @@ const OverviewModule = {
             <!-- Stage distribution meter -->
             <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 pb-2">
               ${[
-                ['Validation', metrics.stage_distribution['Preliminary validation'] || 0, 'bg-slate-200 text-slate-700'],
-                ['Scrutiny', (metrics.stage_distribution['Scrutiny'] || 0) + (metrics.stage_distribution['Re-scrutiny'] || 0), 'bg-[#eaedff] text-[#001332]'],
-                ['EVC Visits', (metrics.stage_distribution['EVC scheduling'] || 0) + (metrics.stage_distribution['EVC completed'] || 0), 'bg-[#ffdbce] text-[#571a00]'],
-                ['SAC/SHC', metrics.stage_distribution['SAC/SHC review'] || 0, 'bg-[#ffdad6] text-[#93000a]'],
-                ['Disposition', metrics.stage_distribution['Authorized disposition'] || 0, 'bg-[#002f1e] text-[#23a274]']
+                ['Validation', stageDist['Preliminary validation'] || 0, 'bg-slate-200 text-slate-700'],
+                ['Scrutiny', (stageDist['Scrutiny'] || 0) + (stageDist['Re-scrutiny'] || 0), 'bg-[#eaedff] text-[#001332]'],
+                ['EVC Visits', (stageDist['EVC scheduling'] || 0) + (stageDist['EVC completed'] || 0), 'bg-[#ffdbce] text-[#571a00]'],
+                ['SAC/SHC', stageDist['SAC/SHC review'] || 0, 'bg-[#ffdad6] text-[#93000a]'],
+                ['Disposition', stageDist['Authorized disposition'] || 0, 'bg-[#002f1e] text-[#23a274]']
               ].map(([stg, count, cls]) => `
                 <div class="p-2 rounded-lg bg-slate-50 border border-slate-100 text-center">
                   <div class="text-[10px] text-slate-500 uppercase font-semibold">${stg}</div>
