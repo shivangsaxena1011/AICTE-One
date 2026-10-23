@@ -27,6 +27,7 @@ ROLE_ANTI_RAGGING_OFFICER = "ANTI_RAGGING_OFFICER"
 ROLE_INSTITUTE_HEAD = "INSTITUTE_HEAD"
 ROLE_STUDENT_COMPLAINANT = "STUDENT_COMPLAINANT"
 ROLE_PUBLIC_VISITOR = "PUBLIC_VISITOR"
+ROLE_DEMO_JUDGE = "DEMO_JUDGE"
 
 # Legacy & Alias Compatibility
 ROLE_ADMIN = ROLE_SUPER_ADMIN
@@ -44,12 +45,14 @@ ALL_ROLES = [
     ROLE_ANTI_RAGGING_OFFICER,
     ROLE_INSTITUTE_HEAD,
     ROLE_STUDENT_COMPLAINANT,
-    ROLE_PUBLIC_VISITOR
+    ROLE_PUBLIC_VISITOR,
+    ROLE_DEMO_JUDGE
 ]
 
 # Standard Permission Sets by Role
 ROLE_PERMISSIONS_MAP: dict[str, Set[str]] = {
     ROLE_SUPER_ADMIN: {"*"},  # Full system-wide statutory access
+    ROLE_DEMO_JUDGE: {"*"},   # Full prototype inspection & evaluation access
     ROLE_SECURITY_OFFICER: {
         "security:view", "security:manage", "audit:view", "audit:export",
         "document:view_all", "document:verify", "institution:view_all",
@@ -279,7 +282,7 @@ def require_roles(*allowed_roles: str):
 
     def role_dependency(user: User = Depends(get_current_user)) -> User:
         user_role = (user.role or "").upper()
-        if user_role == ROLE_SUPER_ADMIN:
+        if user_role == ROLE_SUPER_ADMIN or user_role == ROLE_DEMO_JUDGE:
             return user
 
         if user_role not in normalized_allowed:
@@ -297,7 +300,7 @@ def require_permission(permission_code: str):
     """
     def permission_dependency(user: User = Depends(get_current_user)) -> User:
         user_role = (user.role or "").upper()
-        if user_role == ROLE_SUPER_ADMIN:
+        if user_role == ROLE_SUPER_ADMIN or user_role == ROLE_DEMO_JUDGE:
             return user
 
         user_perms = ROLE_PERMISSIONS_MAP.get(user_role, set())

@@ -265,21 +265,32 @@ const AuthGateway = {
     this.render();
   },
 
-  enterJudgeDemo() {
+  async enterJudgeDemo() {
     this.isJudgeDemo = true;
     sessionStorage.setItem('aicte_judge_demo', 'true');
     this.mountDemoBanner();
 
-    // Assign Demo Reviewer Persona
-    App.currentUser = {
-      id: 'USR-DEMO-JUDGE',
-      username: 'judge.evaluator',
-      full_name: 'Honorable Evaluation Committee / Judge',
-      role: 'DEMO_JUDGE',
-      department: 'National Evaluation Bureau',
-      institution_id: null,
-      permissions: ['READ_ALL', 'EXPLORE_PROTOTYPE', 'DEMO_SANDBOX']
-    };
+    try {
+      const res = await API.post('/api/auth/demo-session', {});
+      if (res && res.access_token) {
+        API.setToken(res.access_token);
+        if (res.user) App.currentUser = res.user;
+      }
+    } catch (e) {
+      console.warn('Demo session API fallback:', e);
+    }
+
+    if (!App.currentUser) {
+      App.currentUser = {
+        id: 'USR-DEMO-JUDGE',
+        username: 'demo.judge',
+        full_name: 'Honorable Evaluation Committee / Judge',
+        role: 'DEMO_JUDGE',
+        department: 'National Evaluation Bureau',
+        institution_id: null,
+        permissions: ['READ_ALL', 'EXPLORE_PROTOTYPE', 'DEMO_SANDBOX']
+      };
+    }
     App.currentRole = {
       id: 'DEMO_JUDGE',
       name: 'Honorable Evaluation Committee / Judge',

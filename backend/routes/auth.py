@@ -228,6 +228,71 @@ def login(
         user=build_user_response(user)
     )
 
+@router.post("/demo-session", response_model=LoginResponse)
+def create_demo_session(
+    response: Response,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """
+    Creates an isolated, read-only demo evaluation session for judges without requiring credentials.
+    """
+    judge_user = db.query(User).filter(User.username == "demo.judge").first()
+    if not judge_user:
+        judge_user = User(
+            id="USR-DEMO-JUDGE",
+            username="demo.judge",
+            email="judge.evaluator@aicte-india.org",
+            hashed_password=hash_password(secrets.token_urlsafe(16)),
+            full_name="Honorable Evaluation Committee / Judge",
+            role="DEMO_JUDGE",
+            department="National Evaluation Bureau",
+            institution_id=None,
+            is_active=True,
+            is_mfa_enabled=False
+        )
+        db.add(judge_user)
+        db.commit()
+        db.refresh(judge_user)
+
+    token_data = {
+        "sub": judge_user.id,
+        "username": judge_user.username,
+        "role": judge_user.role,
+        "is_demo": True
+    }
+    access_token = create_access_token(token_data, expires_delta=timedelta(hours=4))
+    token_digest = hash_token(access_token)
+    session_expire = utc_now() + timedelta(hours=4)
+
+    session_record = UserSession(
+        id=f"SES-{uuid.uuid4().hex[:8].upper()}",
+        user_id=judge_user.id,
+        token_hash=token_digest,
+        ip_address=request.client.host if request.client else "127.0.0.1",
+        user_agent=request.headers.get("user-agent", "Browser Demo Session")[:255],
+        expires_at=session_expire,
+        is_active=True
+    )
+    db.add(session_record)
+    db.commit()
+
+    response.set_cookie(
+        key="aicte_session",
+        value=access_token,
+        httponly=True,
+        max_age=14400,
+        samesite="lax",
+        secure=False
+    )
+
+    return LoginResponse(
+        access_token=access_token,
+        token_type="bearer",
+        expires_in=14400,
+        user=build_user_response(judge_user)
+    )
+
 @router.post("/logout")
 def logout(
     response: Response,
