@@ -453,7 +453,6 @@ const ComplaintsModule = {
     App.closeModal();
     App.refresh();
   }
-  }
 };
 
 window.ComplaintsModule = ComplaintsModule;
