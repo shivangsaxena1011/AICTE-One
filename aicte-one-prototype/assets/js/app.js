@@ -44,6 +44,7 @@ const App = {
     }
     await this.initRole();
     this.setupNavigation();
+    this.renderSidebar();
     this.setupGlobalSearch();
     this.setupModals();
     this.updateBackendStatusIndicator();
@@ -147,6 +148,11 @@ const App = {
   },
 
   updateRoleDisplay() {
+    this.renderSidebar();
+    const role = this.currentUser ? this.currentUser.role : (typeof AuthGateway !== 'undefined' && AuthGateway.isJudgeDemo ? 'DEMO_JUDGE' : (this.currentRole ? this.currentRole.id : 'PUBLIC_VISITOR'));
+    if (typeof RBAC !== 'undefined' && this.currentRoute && !RBAC.canAccessRoute(role, this.currentRoute)) {
+      this.navigate(RBAC.getDefaultRoute(role));
+    }
     const el = document.getElementById('header-role-name');
     const emailEl = document.getElementById('header-role-email');
     const anchorEl = document.getElementById('header-context-anchor');
@@ -480,6 +486,118 @@ const App = {
     `;
   },
 
+  renderSidebar() {
+    const nav = document.getElementById('sidebar-nav');
+    if (!nav) return;
+
+    const role = this.currentUser ? this.currentUser.role : (typeof AuthGateway !== 'undefined' && AuthGateway.isJudgeDemo ? 'DEMO_JUDGE' : (this.currentRole ? this.currentRole.id : 'PUBLIC_VISITOR'));
+    if (typeof RBAC === 'undefined') return;
+
+    const groups = RBAC.getGroupedMenuItems(role);
+    let html = '';
+    let counter = 1;
+
+    groups.forEach(group => {
+      html += `
+        <div>
+          <div class="px-3 text-[10px] font-bold uppercase tracking-wider text-[#7a90bc] mb-2 flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${group.color}"></span>
+            <span>${escapeHtml(group.name)}</span>
+          </div>
+          <div class="space-y-1">
+            ${group.items.map(item => `
+              <div class="flex items-center justify-between group">
+                <a 
+                  href="#/${item.id}" 
+                  class="nav-item flex-1 flex items-center gap-2.5 px-3 py-2 rounded-md font-medium text-slate-300 hover:text-white hover:bg-[#0f284e] transition-all cursor-pointer ${this.currentRoute === item.id ? 'nav-active' : ''}" 
+                  data-route="${item.id}"
+                >
+                  <span class="material-symbols-outlined text-[18px] text-[#7a90bc] group-hover:text-amber-400 transition-colors">${item.icon}</span>
+                  <span class="truncate">${counter++}. ${escapeHtml(item.label)}</span>
+                </a>
+                ${item.externalLink ? `
+                  <a href="${item.externalLink}" target="_blank" rel="noopener noreferrer" title="Open External Tool" class="px-1.5 py-0.5 text-[9px] font-mono font-bold uppercase bg-[#a73a00] hover:bg-[#8f3200] text-white rounded transition-colors mr-2 flex items-center gap-0.5 shadow-xs">
+                    <span>Live</span>
+                    <span class="material-symbols-outlined text-[10px]">open_in_new</span>
+                  </a>
+                ` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    });
+
+    nav.innerHTML = html;
+    this.setupNavigation();
+    this.renderSidebar();
+  },
+
+  renderAccessDenied(route, role) {
+    this.currentRoute = route;
+    const contentContainer = document.getElementById('main-content');
+    if (!contentContainer) return;
+
+    const defaultRoute = typeof RBAC !== 'undefined' ? RBAC.getDefaultRoute(role) : 'institutions';
+    const meta = (typeof RBAC !== 'undefined' && RBAC.ROLE_META[role]) ? RBAC.ROLE_META[role] : { name: role, badge: 'Restricted' };
+
+    contentContainer.innerHTML = `
+      <div class="max-w-3xl mx-auto px-4 py-16 text-center">
+        <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-red-950/40 border-2 border-red-500/50 flex items-center justify-center text-red-500 shadow-2xl animate-pulse">
+          <span class="material-symbols-outlined text-4xl">shield_lock</span>
+        </div>
+
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-950/70 border border-red-500/40 text-red-300 font-mono text-xs uppercase tracking-wider mb-4">
+          <span class="w-2 h-2 rounded-full bg-red-500"></span>
+          <span>HTTP 403 · Statutory Access Forbidden</span>
+        </div>
+
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-[#001332] tracking-tight mb-3">
+          Restricted Regulatory Jurisdiction
+        </h1>
+
+        <p class="text-sm text-slate-600 max-w-xl mx-auto leading-relaxed mb-6">
+          Your active persona <b class="text-[#001332]">${escapeHtml(meta.name)}</b> (<span class="font-mono text-xs text-blue-700 font-bold">${escapeHtml(role)}</span>) does not possess statutory authorization to access the <code class="px-2 py-0.5 rounded bg-slate-200 text-slate-800 font-mono text-xs font-bold">#/${escapeHtml(route)}</code> workspace under the AICTE Approval Process Handbook (APH 2024-27).
+        </p>
+
+        <div class="card p-5 max-w-md mx-auto bg-slate-50 border border-slate-200 mb-8 text-left text-xs space-y-2 shadow-xs">
+          <div class="flex items-center justify-between text-slate-500">
+            <span>Requested Workspace:</span>
+            <span class="font-mono font-bold text-slate-800">#/${escapeHtml(route)}</span>
+          </div>
+          <div class="flex items-center justify-between text-slate-500">
+            <span>Your Jurisdiction:</span>
+            <span class="font-bold text-slate-800">${escapeHtml(meta.badge)}</span>
+          </div>
+          <div class="flex items-center justify-between text-slate-500">
+            <span>Enforcement Standard:</span>
+            <span class="font-mono text-slate-700">APH 2024-27 · Strict Server RBAC</span>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button 
+            onclick="App.navigate('${defaultRoute}')"
+            class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-900 to-[#001332] hover:from-blue-800 hover:to-blue-950 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+          >
+            <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+            <span>Return to Your Authorized Dashboard</span>
+          </button>
+
+          <button 
+            onclick="AuthGateway.show()"
+            class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs border border-slate-300 shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <span class="material-symbols-outlined text-[18px] text-blue-600">switch_account</span>
+            <span>Switch Persona / Sign In</span>
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('nav-active'));
+  },
+
   setupNavigation() {
     document.querySelectorAll('[data-route]').forEach(link => {
       link.addEventListener('click', (e) => {
@@ -492,21 +610,21 @@ const App = {
   },
 
   async navigate(route, param = null, updateHash = true) {
+    const role = this.currentUser ? this.currentUser.role : (typeof AuthGateway !== 'undefined' && AuthGateway.isJudgeDemo ? 'DEMO_JUDGE' : (this.currentRole ? this.currentRole.id : 'PUBLIC_VISITOR'));
+
     if (!this.modules[route]) {
-      console.warn(`Module '${route}' not found. Defaulting to overview.`);
-      route = 'overview';
+      console.warn(`Module '${route}' not found. Redirecting to role default dashboard.`);
+      route = typeof RBAC !== 'undefined' ? RBAC.getDefaultRoute(role) : 'institutions';
     }
 
-    // Public vs Protected route check
-    const publicRoutes = ['overview', 'executive-intelligence', 'institutions', 'digitalTwin', 'digital-twin', 'digital_twin', 'institution-digital-twin', 'reports', 'settings'];
-    const isDemo = typeof AuthGateway !== 'undefined' && AuthGateway.isJudgeDemo;
-    if (!this.currentUser && !isDemo && !publicRoutes.includes(route)) {
-      this.toast('Authentication required to access officer or institutional workflow.', 'info');
-      if (typeof AuthGateway !== 'undefined') {
-        AuthGateway.show();
-      } else {
-        this.showLoginModal(route);
+    // RBAC Route Authorization Guard
+    if (typeof RBAC !== 'undefined' && !RBAC.canAccessRoute(role, route)) {
+      console.warn(`Access Denied: Role '${role}' cannot access route '${route}'`);
+      if (updateHash) {
+        window.location.hash = param ? `#/${route}/${param}` : `#/${route}`;
       }
+      this.renderAccessDenied(route, role);
+      this.toggleSidebar(false);
       return;
     }
 

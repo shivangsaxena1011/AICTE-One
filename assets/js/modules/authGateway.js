@@ -413,7 +413,8 @@ const AuthGateway = {
       App.updateRoleDisplay();
       this.hide();
       App.toast(`Authenticated successfully as ${data.user.full_name}`, "success");
-      App.navigate('overview');
+      const targetRoute = typeof RBAC !== 'undefined' ? RBAC.getDefaultRoute(data.user.role) : 'overview';
+      App.navigate(targetRoute);
 
     } catch (err) {
       this.loading = false;
@@ -506,7 +507,8 @@ const AuthGateway = {
       App.updateRoleDisplay();
       this.hide();
       App.toast(`Authenticated via Biometric Passkey as ${loginRes.user.full_name}`, "success");
-      App.navigate('overview');
+      const targetRoute = typeof RBAC !== 'undefined' ? RBAC.getDefaultRoute(loginRes.user.role) : 'overview';
+      App.navigate(targetRoute);
 
     } catch (err) {
       this.loading = false;

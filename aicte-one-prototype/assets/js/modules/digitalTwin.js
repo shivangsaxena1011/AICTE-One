@@ -6,7 +6,14 @@ const DigitalTwinModule = {
   selectedInstitutionId: "INST-10482",
 
   async render(params = {}) {
-    if (params.id) {
+    if (App.currentUser && App.currentUser.role === 'INSTITUTE_HEAD') {
+      if (App.currentUser.institution_id) {
+        if (params.id && params.id !== App.currentUser.institution_id) {
+          App.toast("Tenant boundary enforced: Switched to your bound institution.", "warning");
+        }
+        this.selectedInstitutionId = App.currentUser.institution_id;
+      }
+    } else if (params.id) {
       this.selectedInstitutionId = params.id;
     }
     const twin = await API.getInstitutionDigitalTwin(this.selectedInstitutionId);

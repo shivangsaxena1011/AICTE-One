@@ -26,6 +26,11 @@ def get_graph_data(
     user: Optional[User] = Depends(get_optional_user),
     db: Session = Depends(get_db)
 ):
+    if not user or user.role in {ROLE_PUBLIC_VISITOR, ROLE_STUDENT_COMPLAINANT}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access forbidden: Regulatory Intelligence Graph is restricted to authorized administrative officers and institutions."
+        )
     """
     Builds the Regulatory Intelligence Graph connecting Institutions,
     Applications, Documents, Complaints, Compliance, and Officials.

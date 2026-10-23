@@ -10,6 +10,10 @@ const ComplaintsModule = {
   },
 
   async render(params = {}) {
+    const userRole = App.currentUser ? App.currentUser.role : (typeof AuthGateway !== 'undefined' && AuthGateway.isJudgeDemo ? 'DEMO_JUDGE' : (App.currentRole ? App.currentRole.id : 'PUBLIC_VISITOR'));
+    const isOfficer = ['SUPER_ADMIN', 'COMPLAINT_OFFICER', 'ANTI_RAGGING_OFFICER', 'DEMO_JUDGE'].includes(userRole);
+    const isStudent = userRole === 'STUDENT_COMPLAINANT';
+    const isAntiRagging = userRole === 'ANTI_RAGGING_OFFICER';
     const list = await API.getComplaints();
     this.items = list;
     let filtered = list;
@@ -54,16 +58,23 @@ const ComplaintsModule = {
           ` : '<span class="text-slate-300 font-mono text-xs">—</span>'}
         </td>
         <td class="py-3 px-3 text-right">
-          <div class="flex items-center justify-end gap-1.5">
-            <button class="px-2 py-1 text-xs font-semibold rounded bg-slate-100 text-[#001332] hover:bg-slate-200 transition-colors" 
-              onclick="ComplaintsModule.openTransferModal('${c.id}')">
-              Transfer
-            </button>
-            <button class="px-2 py-1 text-xs font-semibold rounded bg-[#001332] text-white hover:bg-[#0f284e] transition-colors shadow-xs" 
-              onclick="ComplaintsModule.openDisposeModal('${c.id}')">
-              Dispose
-            </button>
-          </div>
+          ${isOfficer ? `
+            <div class="flex items-center justify-end gap-1.5">
+              <button class="px-2 py-1 text-xs font-semibold rounded bg-slate-100 text-[#001332] hover:bg-slate-200 transition-colors" 
+                onclick="ComplaintsModule.openTransferModal('${c.id}')">
+                Transfer
+              </button>
+              <button class="px-2 py-1 text-xs font-semibold rounded bg-[#001332] text-white hover:bg-[#0f284e] transition-colors shadow-xs" 
+                onclick="ComplaintsModule.openDisposeModal('${c.id}')">
+                Dispose
+              </button>
+            </div>
+          ` : `
+            <span class="inline-flex items-center gap-1 text-[11px] font-mono font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+              <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+              Under Review
+            </span>
+          `}
         </td>
       </tr>
     `).join("");
@@ -92,20 +103,22 @@ const ComplaintsModule = {
           </div>
 
           <div class="flex flex-wrap items-center gap-2 bg-slate-100/80 p-1.5 rounded-lg border border-slate-200">
-            <button class="px-3 py-1.5 bg-white text-[#001332] font-semibold text-xs rounded-md shadow-xs hover:bg-slate-50 border border-slate-200 transition-colors flex items-center gap-1.5" 
-              onclick="CSVUtil.downloadCSV('aicte_complaints_register.csv', localStore.db.complaints)">
-              <span class="material-symbols-outlined text-[16px]">file_download</span>
-              <span>Export CSV</span>
-            </button>
-            <button class="px-3 py-1.5 bg-[#001332] text-white font-semibold text-xs rounded-md shadow-xs hover:bg-[#0f284e] transition-colors flex items-center gap-1.5" 
-              onclick="App.navigate('coordination')">
-              <span class="material-symbols-outlined text-[16px]">alt_route</span>
-              <span>Bureau Coordination</span>
-            </button>
+            ${isOfficer ? `
+              <button class="px-3 py-1.5 bg-white text-[#001332] font-semibold text-xs rounded-md shadow-xs hover:bg-slate-50 border border-slate-200 transition-colors flex items-center gap-1.5" 
+                onclick="CSVUtil.downloadCSV('aicte_complaints_register.csv', localStore.db.complaints)">
+                <span class="material-symbols-outlined text-[16px]">file_download</span>
+                <span>Export CSV</span>
+              </button>
+              <button class="px-3 py-1.5 bg-[#001332] text-white font-semibold text-xs rounded-md shadow-xs hover:bg-[#0f284e] transition-colors flex items-center gap-1.5" 
+                onclick="App.navigate('coordination')">
+                <span class="material-symbols-outlined text-[16px]">alt_route</span>
+                <span>Bureau Coordination</span>
+              </button>
+            ` : ''}
             <button class="px-3 py-1.5 bg-[#fd651e] text-white font-semibold text-xs rounded-md shadow-xs hover:bg-[#a73a00] transition-colors flex items-center gap-1.5" 
               onclick="ComplaintsModule.openRegisterModal()">
               <span class="material-symbols-outlined text-[16px]">add_circle</span>
-              <span>Register Grievance</span>
+              <span>${isStudent ? 'Lodge New Grievance' : 'Register Grievance'}</span>
             </button>
           </div>
         </div>

@@ -34,7 +34,7 @@ def copilot_chat(
     if user.role == ROLE_PUBLIC_VISITOR:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="AI Copilot requires an authenticated institutional or officer account."
+            detail="Access forbidden: AI Copilot is restricted to authorized regulatory officers and institutional representatives."
         )
 
     result = copilot_service.answer_query(

@@ -41,3 +41,7 @@ backups/*
 
 # Reference UI assets from user downloads
 reference_ui/
+
+# Scratch & temporary scripts
+scratch/
+

@@ -25,7 +25,7 @@ router = APIRouter(prefix="/api/workflows", tags=["Workflows"])
 
 @router.get("", response_model=List[WorkflowDefinitionResponse])
 def list_workflows(
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_roles(ROLE_SUPER_ADMIN, ROLE_COMPLIANCE_OFFICER, ROLE_SECURITY_OFFICER)),
     db: Session = Depends(get_db)
 ):
     """Lists all active and configured Approval Process Handbook (APH) workflows."""
@@ -39,7 +39,7 @@ def list_workflows(
 @router.get("/{id}")
 def get_workflow(
     id: str,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_roles(ROLE_SUPER_ADMIN, ROLE_COMPLIANCE_OFFICER, ROLE_SECURITY_OFFICER)),
     db: Session = Depends(get_db)
 ):
     """Retrieves full workflow definition with stage sequence, prerequisites, and SLAs."""

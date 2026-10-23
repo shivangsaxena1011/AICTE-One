@@ -36,6 +36,11 @@ def get_operational_kpis(
     user: Optional[User] = Depends(get_optional_user),
     db: Session = Depends(get_db)
 ):
+    if not user or user.role in {ROLE_PUBLIC_VISITOR, ROLE_STUDENT_COMPLAINANT}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access forbidden: Operational KPI analytics are restricted to authorized regulatory officers."
+        )
     """
     Returns the 15 authoritative KPI metrics defined in Phase 3 specifications.
     Every metric is backed by actual database queries, scoped by user persona.
@@ -343,7 +348,9 @@ def get_graph_application_trends(
 # Graph D — Application Ageing & Stage-Wise Pendency
 # -------------------------------------------------------------
 @router.get("/graphs/pendency-ageing")
-def get_graph_pendency_ageing(db: Session = Depends(get_db)):
+def get_graph_pendency_ageing(user: Optional[User] = Depends(get_optional_user), db: Session = Depends(get_db)):
+    if not user or user.role in {ROLE_PUBLIC_VISITOR, ROLE_STUDENT_COMPLAINANT}:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden: Analytics graphs are restricted to authorized officers.")
     today = date.today()
     apps = db.query(Application).filter(
         Application.status.notin_(["Approved", "Rejected", "Disposed", "Closed"])
@@ -378,7 +385,9 @@ def get_graph_pendency_ageing(db: Session = Depends(get_db)):
 # Graph E — Regional and State-Wise Analytics
 # -------------------------------------------------------------
 @router.get("/graphs/regional-distribution")
-def get_graph_regional_distribution(db: Session = Depends(get_db)):
+def get_graph_regional_distribution(user: Optional[User] = Depends(get_optional_user), db: Session = Depends(get_db)):
+    if not user or user.role in {ROLE_PUBLIC_VISITOR, ROLE_STUDENT_COMPLAINANT}:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden: Analytics graphs are restricted to authorized officers.")
     state_results = db.query(
         Institution.state,
         func.count(Institution.id).label("count")
@@ -394,7 +403,9 @@ def get_graph_regional_distribution(db: Session = Depends(get_db)):
 # Graph F — Application Funnel
 # -------------------------------------------------------------
 @router.get("/graphs/application-funnel")
-def get_graph_application_funnel(db: Session = Depends(get_db)):
+def get_graph_application_funnel(user: Optional[User] = Depends(get_optional_user), db: Session = Depends(get_db)):
+    if not user or user.role in {ROLE_PUBLIC_VISITOR, ROLE_STUDENT_COMPLAINANT}:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden: Analytics graphs are restricted to authorized officers.")
     apps = db.query(Application).all()
     total = len(apps)
 
@@ -420,7 +431,9 @@ def get_graph_application_funnel(db: Session = Depends(get_db)):
 # Graph G — EVC Scheduling and Completion
 # -------------------------------------------------------------
 @router.get("/graphs/evc-status")
-def get_graph_evc_status(db: Session = Depends(get_db)):
+def get_graph_evc_status(user: Optional[User] = Depends(get_optional_user), db: Session = Depends(get_db)):
+    if not user or user.role in {ROLE_PUBLIC_VISITOR, ROLE_STUDENT_COMPLAINANT}:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden: Analytics graphs are restricted to authorized officers.")
     schedules = db.query(EVCSchedule).all()
     status_counts = {
         "Scheduled": 0,
@@ -450,7 +463,9 @@ def get_graph_evc_status(db: Session = Depends(get_db)):
 # Graph H — Statutory Compliance Index
 # -------------------------------------------------------------
 @router.get("/graphs/compliance-index")
-def get_graph_compliance_index(db: Session = Depends(get_db)):
+def get_graph_compliance_index(user: Optional[User] = Depends(get_optional_user), db: Session = Depends(get_db)):
+    if not user or user.role in {ROLE_PUBLIC_VISITOR, ROLE_STUDENT_COMPLAINANT}:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden: Analytics graphs are restricted to authorized officers.")
     obligations = db.query(ComplianceObligation).all()
     undertakings = db.query(Undertaking).all()
 
@@ -473,7 +488,9 @@ def get_graph_compliance_index(db: Session = Depends(get_db)):
 # Graph I — Document Validity and Verification
 # -------------------------------------------------------------
 @router.get("/graphs/document-validity")
-def get_graph_document_validity(db: Session = Depends(get_db)):
+def get_graph_document_validity(user: Optional[User] = Depends(get_optional_user), db: Session = Depends(get_db)):
+    if not user or user.role in {ROLE_PUBLIC_VISITOR, ROLE_STUDENT_COMPLAINANT}:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden: Analytics graphs are restricted to authorized officers.")
     validities = db.query(DocumentValidity).all()
     counts = {
         "Active": sum(1 for v in validities if v.status == "Active"),
@@ -524,7 +541,9 @@ def get_graph_officer_workload(
 # Graph K — Workflow Bottleneck Heatmap
 # -------------------------------------------------------------
 @router.get("/graphs/bottleneck-heatmap")
-def get_graph_bottleneck_heatmap(db: Session = Depends(get_db)):
+def get_graph_bottleneck_heatmap(user: Optional[User] = Depends(get_optional_user), db: Session = Depends(get_db)):
+    if not user or user.role in {ROLE_PUBLIC_VISITOR, ROLE_STUDENT_COMPLAINANT}:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden: Analytics graphs are restricted to authorized officers.")
     apps = db.query(Application).all()
     today = date.today()
 
