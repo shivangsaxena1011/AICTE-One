@@ -53,6 +53,24 @@ const API = {
     return data;
   },
 
+  async createDemoSession() {
+    try {
+      const res = await fetch(`${this.baseUrl}/auth/demo-session`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include"
+      });
+      const data = await res.json();
+      if (res.ok && data.access_token) {
+        this.setToken(data.access_token);
+      }
+      return data;
+    } catch (e) {
+      console.warn("Could not create backend demo session:", e);
+      return null;
+    }
+  },
+
   async logout() {
     try {
       await fetch(`${this.baseUrl}/auth/logout`, {

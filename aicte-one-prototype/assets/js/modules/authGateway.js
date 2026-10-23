@@ -271,11 +271,8 @@ const AuthGateway = {
     this.mountDemoBanner();
 
     try {
-      const res = await API.post('/api/auth/demo-session', {});
-      if (res && res.access_token) {
-        API.setToken(res.access_token);
-        if (res.user) App.currentUser = res.user;
-      }
+      const res = await API.createDemoSession();
+      if (res && res.user) App.currentUser = res.user;
     } catch (e) {
       console.warn('Demo session API fallback:', e);
     }
