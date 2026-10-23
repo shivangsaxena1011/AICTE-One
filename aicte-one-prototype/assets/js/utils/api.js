@@ -295,6 +295,8 @@ const API = {
             cleanParams[k] = params[k];
           }
         });
+        if (cleanParams.search && !cleanParams.q) cleanParams.q = cleanParams.search;
+        if (cleanParams.q && !cleanParams.search) cleanParams.search = cleanParams.q;
         const qs = new URLSearchParams(cleanParams).toString();
         const res = await fetch(`${this.baseUrl}/institutions?${qs}`, { headers: this.getHeaders() });
         if (res.ok) {
@@ -489,6 +491,8 @@ const API = {
             cleanParams[k] = params[k];
           }
         });
+        if (cleanParams.search && !cleanParams.q) cleanParams.q = cleanParams.search;
+        if (cleanParams.q && !cleanParams.search) cleanParams.search = cleanParams.q;
         const qs = new URLSearchParams(cleanParams).toString();
         const res = await fetch(`${this.baseUrl}/applications?${qs}`, { headers: this.getHeaders() });
         if (res.ok) {
@@ -582,6 +586,8 @@ const API = {
             cleanParams[k] = params[k];
           }
         });
+        if (cleanParams.search && !cleanParams.q) cleanParams.q = cleanParams.search;
+        if (cleanParams.q && !cleanParams.search) cleanParams.search = cleanParams.q;
         const qs = new URLSearchParams(cleanParams).toString();
         const res = await fetch(`${this.baseUrl}/evc?${qs}`, { headers: this.getHeaders() });
         if (res.ok) {
@@ -885,6 +891,8 @@ const API = {
             cleanParams[k] = params[k];
           }
         });
+        if (cleanParams.search && !cleanParams.q) cleanParams.q = cleanParams.search;
+        if (cleanParams.q && !cleanParams.search) cleanParams.search = cleanParams.q;
         const qs = new URLSearchParams(cleanParams).toString();
         const res = await fetch(`${this.baseUrl}/documents?${qs}`, { headers: this.getHeaders() });
         if (res.ok) {
@@ -957,6 +965,8 @@ const API = {
             cleanParams[k] = params[k];
           }
         });
+        if (cleanParams.search && !cleanParams.q) cleanParams.q = cleanParams.search;
+        if (cleanParams.q && !cleanParams.search) cleanParams.search = cleanParams.q;
         const qs = new URLSearchParams(cleanParams).toString();
         const res = await fetch(`${this.baseUrl}/compliance?${qs}`, { headers: this.getHeaders() });
         if (res.ok) {
@@ -1008,6 +1018,8 @@ const API = {
             cleanParams[k] = params[k];
           }
         });
+        if (cleanParams.search && !cleanParams.q) cleanParams.q = cleanParams.search;
+        if (cleanParams.q && !cleanParams.search) cleanParams.search = cleanParams.q;
         const qs = new URLSearchParams(cleanParams).toString();
         const res = await fetch(`${this.baseUrl}/complaints?${qs}`, { headers: this.getHeaders() });
         if (res.ok) {
@@ -1165,6 +1177,8 @@ const API = {
             cleanParams[k] = params[k];
           }
         });
+        if (cleanParams.search && !cleanParams.q) cleanParams.q = cleanParams.search;
+        if (cleanParams.q && !cleanParams.search) cleanParams.search = cleanParams.q;
         const qs = new URLSearchParams(cleanParams).toString();
         const res = await fetch(`${this.baseUrl}/tasks?${qs}`, { headers: this.getHeaders() });
         if (res.ok) {
@@ -1298,6 +1312,8 @@ const API = {
             cleanParams[k] = params[k];
           }
         });
+        if (cleanParams.search && !cleanParams.q) cleanParams.q = cleanParams.search;
+        if (cleanParams.q && !cleanParams.search) cleanParams.search = cleanParams.q;
         const qs = new URLSearchParams(cleanParams).toString();
         const res = await fetch(`${this.baseUrl}/audit?${qs}`, { headers: this.getHeaders() });
         if (res.ok) {

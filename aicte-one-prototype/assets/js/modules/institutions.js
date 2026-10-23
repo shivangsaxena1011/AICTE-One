@@ -15,6 +15,12 @@ const InstitutionsModule = {
   },
 
   async render() {
+    if (typeof App !== 'undefined' && App.currentParam) {
+      if (typeof App.currentParam === 'string' && App.currentParam !== this.state.search) {
+        this.state.search = App.currentParam;
+        this.state.page = 1;
+      }
+    }
     const [res, stats] = await Promise.all([
       API.getInstitutions({
         q: this.state.search,
@@ -124,6 +130,7 @@ const InstitutionsModule = {
             <option value="10" ${this.state.limit === 10 ? 'selected' : ''}>10 per page</option>
             <option value="25" ${this.state.limit === 25 ? 'selected' : ''}>25 per page</option>
             <option value="50" ${this.state.limit === 50 ? 'selected' : ''}>50 per page</option>
+            <option value="100" ${this.state.limit === 100 ? 'selected' : ''}>100 per page</option>
           </select>
         </div>
 

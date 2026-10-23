@@ -69,6 +69,7 @@ def get_institutions_stats(db: Session = Depends(get_db)):
 @router.get("", response_model=dict)
 def list_institutions(
     q: Optional[str] = Query(None, description="Search by name, permanent_id, or city"),
+    search: Optional[str] = Query(None, description="Search alias for q"),
     state: Optional[str] = Query(None),
     district: Optional[str] = Query(None),
     category: Optional[str] = Query(None),
@@ -86,14 +87,14 @@ def list_institutions(
     """
     query = db.query(Institution)
 
-    if q:
-        q_clean = q.strip()
+    search_term = (q or search or "").strip()
+    if search_term:
         search_filter = or_(
-            Institution.name.ilike(f"%{q_clean}%"),
-            Institution.permanent_id.ilike(f"%{q_clean}%"),
-            Institution.aicte_id.ilike(f"%{q_clean}%"),
-            Institution.city.ilike(f"%{q_clean}%"),
-            Institution.district.ilike(f"%{q_clean}%")
+            Institution.name.ilike(f"%{search_term}%"),
+            Institution.permanent_id.ilike(f"%{search_term}%"),
+            Institution.aicte_id.ilike(f"%{search_term}%"),
+            Institution.city.ilike(f"%{search_term}%"),
+            Institution.district.ilike(f"%{search_term}%")
         )
         query = query.filter(search_filter)
 

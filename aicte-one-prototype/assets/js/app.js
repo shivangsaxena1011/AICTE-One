@@ -619,43 +619,79 @@ const App = {
       }
 
       debounceTimer = setTimeout(async () => {
-        const instRes = await API.getInstitutions({ search: query, limit: 5 });
-        const appRes = await API.getApplications({ search: query, limit: 5 });
+        const instRes = await API.getInstitutions({ q: query, search: query, limit: 8 });
+        const appRes = await API.getApplications({ q: query, search: query, limit: 5 });
 
         const institutions = instRes.items || instRes.data || (Array.isArray(instRes) ? instRes : []);
         const applications = appRes.items || appRes.data || (Array.isArray(appRes) ? appRes : []);
+        const totalMatches = instRes.total || institutions.length;
 
         if (institutions.length === 0 && applications.length === 0) {
-          resultsBox.innerHTML = `<div class="p-3 text-xs text-slate-400">No matching institutions or applications found</div>`;
+          resultsBox.innerHTML = `
+            <div class="p-4 text-center">
+              <span class="material-symbols-outlined text-slate-400 text-3xl mb-1">search_off</span>
+              <div class="text-xs font-semibold text-slate-700">No institutions matching "${escapeHtml(query)}"</div>
+              <div class="text-[11px] text-slate-400 mt-0.5">Try searching by official AICTE PID (e.g. 1-3589034) or city</div>
+            </div>`;
           resultsBox.classList.remove('hidden');
           return;
         }
 
         resultsBox.innerHTML = `
           ${institutions.length > 0 ? `
-            <div class="p-2 border-b border-slate-100 bg-slate-50 text-[11px] font-bold text-slate-500 uppercase">Institutions</div>
-            ${institutions.map(i => `
-              <div class="p-2.5 hover:bg-slate-100 cursor-pointer flex justify-between items-center text-xs" onclick="App.selectSearchResult('digitalTwin', '${i.id}')">
-                <div>
-                  <div class="font-bold text-navy-900">${escapeHtml(i.name)}</div>
-                  <div class="text-[11px] text-slate-500 font-mono">${escapeHtml(i.permanent_id)} &bull; ${escapeHtml(i.city || '')}, ${escapeHtml(i.state || '')}</div>
+            <div class="px-4 py-2 bg-gradient-to-r from-slate-50 to-blue-50/50 border-b border-slate-100 flex items-center justify-between">
+              <span class="text-[11px] font-bold text-[#001332] uppercase tracking-wider flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-blue-600 text-[16px]">account_balance</span>
+                <span>Institutions & Colleges (${institutions.length} shown of ${totalMatches})</span>
+              </span>
+              <span class="text-[10px] text-slate-500 font-mono">Master Registry</span>
+            </div>
+            <div class="divide-y divide-slate-100">
+              ${institutions.map(i => `
+                <div class="p-3.5 hover:bg-blue-50/70 cursor-pointer flex justify-between items-start gap-3 transition-colors group" onclick="App.selectSearchResult('digitalTwin', '${i.id}')">
+                  <div class="min-w-0 flex-1">
+                    <div class="font-bold text-[#001332] text-xs sm:text-sm leading-snug group-hover:text-blue-700 transition-colors">
+                      ${escapeHtml(i.name)}
+                    </div>
+                    <div class="text-[11px] text-slate-500 font-mono mt-1 flex items-center gap-2 flex-wrap">
+                      <span class="px-1.5 py-0.2 rounded bg-blue-100/70 text-blue-800 font-bold text-[10px]">PID: ${escapeHtml(i.permanent_id || i.id)}</span>
+                      <span>&bull;</span>
+                      <span class="text-slate-600">${escapeHtml(i.city || '')}${i.district ? ', ' + escapeHtml(i.district) : ''}, <b>${escapeHtml(i.state || '')}</b></span>
+                    </div>
+                  </div>
+                  <div class="shrink-0 flex flex-col items-end gap-1.5">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">${escapeHtml(i.category || i.institution_type || 'Technical')}</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold ${i.approval_status === 'Approved' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}">
+                      ${escapeHtml(i.approval_status || 'Approved')}
+                    </span>
+                  </div>
                 </div>
-                <span class="badge badge-neutral text-[10px]">${escapeHtml(i.category || '')}</span>
-              </div>
-            `).join('')}
+              `).join('')}
+            </div>
+            <div class="p-2.5 bg-slate-50 hover:bg-slate-100 cursor-pointer text-center text-xs font-bold text-blue-700 border-t border-slate-200 flex items-center justify-center gap-1.5 transition-colors" onclick="App.navigate('institutions', '${escapeHtml(query)}'); document.getElementById('global-search-results').classList.add('hidden');">
+              <span>View all ${totalMatches} colleges in Directory Table</span>
+              <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
+            </div>
           ` : ''}
 
           ${applications.length > 0 ? `
-            <div class="p-2 border-b border-slate-100 bg-slate-50 text-[11px] font-bold text-slate-500 uppercase">Approval Applications</div>
-            ${applications.map(a => `
-              <div class="p-2.5 hover:bg-slate-100 cursor-pointer flex justify-between items-center text-xs" onclick="App.selectSearchResult('scrutiny', '${a.id || a.application_number}')">
-                <div>
-                  <div class="font-bold text-navy-900">${escapeHtml(a.id || a.application_number)}</div>
-                  <div class="text-[11px] text-slate-500">${escapeHtml(a.institution_name)} &bull; ${escapeHtml(a.type)}</div>
+            <div class="px-4 py-2 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+              <span class="text-[11px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-amber-600 text-[16px]">description</span>
+                <span>Applications (${applications.length})</span>
+              </span>
+            </div>
+            <div class="divide-y divide-slate-100">
+              ${applications.map(a => `
+                <div class="p-3 hover:bg-amber-50/50 cursor-pointer flex justify-between items-center text-xs transition-colors" onclick="App.selectSearchResult('scrutiny', '${a.id || a.application_number}')">
+                  <div class="min-w-0 flex-1">
+                    <div class="font-bold text-[#001332]">${escapeHtml(a.id || a.application_number)}</div>
+                    <div class="text-[11px] text-slate-500">${escapeHtml(a.institution_name)} &bull; ${escapeHtml(a.type)}</div>
+                  </div>
+                  <span class="badge badge-warning text-[10px] shrink-0">${escapeHtml(a.status)}</span>
                 </div>
-                <span class="badge badge-warning text-[10px]">${escapeHtml(a.status)}</span>
-              </div>
-            `).join('')}
+              `).join('')}
+            </div>
           ` : ''}
         `;
         resultsBox.classList.remove('hidden');
