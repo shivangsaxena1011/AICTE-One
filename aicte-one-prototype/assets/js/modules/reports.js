@@ -11,9 +11,12 @@ const ReportsModule = {
 
     container.innerHTML = `
       <div class="page-header flex justify-between items-center mb-6">
-        <div>
-          <h1 class="page-title text-2xl font-bold text-navy-900">Reports & Governance Analytics</h1>
-          <p class="text-sm text-slate-500">Live operational data intelligence, state-wise compliance breakdown, and printable regulatory reports</p>
+        <div class="flex items-center gap-3">
+          <img src="assets/img/shankh-logo.png" alt="SHANKH" class="w-12 h-12 rounded-xl object-contain bg-white p-1 border border-slate-200 shadow-xs shrink-0">
+          <div>
+            <h1 class="page-title text-2xl font-bold text-navy-900">Reports & Governance Analytics</h1>
+            <p class="text-sm text-slate-500">Project SHANKH · Live operational data intelligence, state-wise compliance breakdown, and printable regulatory reports</p>
+          </div>
         </div>
         <div class="flex gap-2">
           <button class="btn btn-secondary text-sm" onclick="ReportsModule.printExecutiveBriefing()">

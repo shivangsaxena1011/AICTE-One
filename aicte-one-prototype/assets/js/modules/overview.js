@@ -110,21 +110,24 @@ const OverviewModule = {
     return `
       <div class="space-y-6">
         
-        <!-- Sovereign Header & Telemetry Strip -->
-        <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-4 pb-2 border-b border-slate-200/80">
-          <div class="space-y-1">
-            <div class="flex items-center gap-2">
-              <span class="font-mono text-xs uppercase tracking-wider text-[#a73a00] font-bold">Apex Regulatory Governance Matrix</span>
-              <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
-              <span class="font-mono text-xs text-slate-500">Session Cycle: APH 2026–27 (Phase II Scrutiny)</span>
+        <!-- Sovereign Header & Telemetry Strip with SHANKH Logo -->
+        <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-sm">
+          <div class="flex items-start sm:items-center gap-3.5 sm:gap-4">
+            <img src="assets/img/shankh-logo.png" alt="SHANKH Logo" class="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-contain bg-white p-1 border-2 border-slate-200 shadow-md shrink-0">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <span class="font-mono text-xs uppercase tracking-wider text-[#a73a00] font-bold">PROJECT SHANKH · AICTE ONE</span>
+                <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                <span class="font-mono text-xs text-slate-500">Session Cycle: APH 2026–27</span>
+              </div>
+              <div class="flex items-baseline gap-2 sm:gap-3 flex-wrap">
+                <h1 class="font-headline text-xl sm:text-2xl font-extrabold text-[#001332] tracking-tight">National Executive Regulatory Command</h1>
+                <span class="font-mono text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded bg-[#002f1e] text-[#23a274]">CODE • ANALYZE • SOLVE</span>
+              </div>
+              <p class="text-xs text-slate-600 max-w-3xl">
+                Unified ministerial intelligence platform integrating Cognitive AI Cross-Bureau Grievance Correlation, Approval Scrutiny, EVC Visits, and Forensic Document Verification across India's technical education ecosystem.
+              </p>
             </div>
-            <div class="flex items-baseline gap-2 sm:gap-3 flex-wrap">
-              <h1 class="font-headline text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#001332] tracking-tight">National Executive Regulatory Command</h1>
-              <span class="font-mono text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded bg-[#002f1e] text-[#23a274]">SYNC INTERVAL: 30s REAL-TIME</span>
-            </div>
-            <p class="text-xs text-slate-600 max-w-4xl">
-              Unified ministerial vantage integrating Module 1 (PGRC Grievances), Module 2 (Scrutiny & EVC Workflows), and Module 3 (Forensic OCR & DigiLocker Telemetry) across 11,482 approved institutions.
-            </p>
           </div>
 
           <!-- Quick Action Buttons -->

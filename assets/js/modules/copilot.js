@@ -30,9 +30,10 @@ const CopilotModule = {
     `).join("");
 
     return `
-      <div class="page-header">
-        <div>
-          <div class="page-eyebrow">Institutional Intelligence & Reasoning Engine</div>
+      <div class="page-header" style="display:flex;align-items:center;gap:16px">
+        <img src="assets/img/shankh-logo.png" alt="SHANKH AI" style="width:52px;height:52px;object-fit:contain;background:#fff;border-radius:12px;padding:4px;border:1px solid #cbd5e1;box-shadow:0 2px 4px rgba(0,0,0,0.06);flex-shrink:0">
+        <div style="flex:1">
+          <div class="page-eyebrow">Project SHANKH · Cognitive Reasoning Engine</div>
           <h1>AI Copilot</h1>
           <p>Evidence-grounded case analysis, statutory rule explanation, and cross-dossier synthesis.</p>
         </div>

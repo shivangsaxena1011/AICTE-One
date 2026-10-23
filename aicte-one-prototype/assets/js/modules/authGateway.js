@@ -536,13 +536,12 @@ const AuthGateway = {
         
         <!-- Header & Emblem -->
         <div class="text-center mb-6 sm:mb-8">
-          <div class="inline-flex items-center justify-center gap-3 mb-3">
-            <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-[#001332] via-[#0f284e] to-[#1e40af] border border-blue-500/30 flex items-center justify-center shadow-lg">
-              <span class="material-symbols-outlined text-amber-400 text-2xl font-bold">account_balance</span>
-            </div>
+          <div class="inline-flex items-center justify-center gap-3.5 mb-3">
+            <img src="assets/img/shankh-logo.png" alt="SHANKH AICTE ONE Logo" class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-contain bg-white p-1 border-2 border-blue-400/50 shadow-2xl shrink-0">
             <div class="text-left">
-              <div class="text-[10px] sm:text-xs tracking-wider uppercase font-bold text-amber-400 font-mono">अखिल भारतीय तकनीकी शिक्षा परिषद</div>
+              <div class="text-[10px] sm:text-xs tracking-wider uppercase font-bold text-amber-400 font-mono">अखिल भारतीय तकनीकी शिक्षा परिषद · Project SHANKH</div>
               <h1 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">AICTE ONE — Central Governance & Intelligence Platform</h1>
+              <div class="text-[11px] text-blue-300 font-mono mt-0.5">CODE • ANALYZE • SOLVE — Sovereign Regulatory Engine</div>
             </div>
           </div>
           <p class="text-xs sm:text-sm text-slate-400 max-w-2xl mx-auto">
@@ -639,13 +638,11 @@ const AuthGateway = {
             <span class="text-[10px] font-mono uppercase text-slate-400 px-2 py-0.5 rounded bg-slate-900 border border-slate-800">Step 2 of 2</span>
           </div>
 
-          <!-- Role Identity Badge -->
+          <!-- Role Identity Badge with SHANKH Branding -->
           <div class="flex items-center gap-3.5 mb-5 bg-[#001332] border border-blue-900/60 rounded-xl p-3.5">
-            <div class="w-11 h-11 rounded-lg bg-blue-950 border border-blue-500/40 flex items-center justify-center shrink-0">
-              <span class="material-symbols-outlined text-amber-400 text-2xl">${role.icon}</span>
-            </div>
+            <img src="assets/img/shankh-logo.png" alt="SHANKH Logo" class="w-12 h-12 rounded-xl object-contain bg-white p-1 border border-blue-500/40 shrink-0 shadow-md">
             <div>
-              <div class="text-[10px] text-amber-400 uppercase font-mono font-bold">${role.badge}</div>
+              <div class="text-[10px] text-amber-400 uppercase font-mono font-bold">${role.badge} · SHANKH</div>
               <h2 class="text-sm font-bold text-white">${role.name}</h2>
               <div class="text-[11px] text-slate-400 font-mono">Suggested Persona: ${role.defaultUsernameHint}</div>
             </div>
