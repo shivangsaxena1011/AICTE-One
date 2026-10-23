@@ -537,8 +537,8 @@ const AuthGateway = {
         <!-- Header & Emblem -->
         <div class="text-center mb-5 sm:mb-6">
           <div class="inline-flex items-center justify-center gap-3.5 mb-2.5">
-            <div class="w-13 h-13 sm:w-15 sm:h-15 rounded-xl bg-white p-1 border border-blue-400/40 shadow-lg shrink-0 flex items-center justify-center">
-              <img src="assets/img/shankh-logo.png" alt="SHANKH Logo" class="w-full h-full object-contain">
+            <div style="width:52px;height:52px;min-width:52px;min-height:52px;max-width:52px;max-height:52px;" class="rounded-xl bg-white p-1 border border-blue-400/40 shadow-lg shrink-0 flex items-center justify-center overflow-hidden">
+              <img src="assets/img/shankh-logo.png" alt="SHANKH Logo" style="width:100%;height:100%;max-width:44px;max-height:44px;object-fit:contain;" class="object-contain">
             </div>
             <div class="text-left">
               <div class="text-[11px] sm:text-xs font-semibold text-amber-400 font-sans tracking-wide flex items-center gap-2">
@@ -649,7 +649,7 @@ const AuthGateway = {
 
           <!-- Role Identity Badge with SHANKH Branding -->
           <div class="flex items-center gap-3.5 mb-5 bg-[#001332] border border-blue-900/60 rounded-xl p-3.5">
-            <img src="assets/img/shankh-logo.png" alt="SHANKH Logo" class="w-12 h-12 rounded-xl object-contain bg-white p-1 border border-blue-500/40 shrink-0 shadow-md">
+            <img src="assets/img/shankh-logo.png" alt="SHANKH Logo" style="width:48px;height:48px;min-width:48px;min-height:48px;max-width:48px;max-height:48px;object-fit:contain;" class="rounded-xl object-contain bg-white p-1 border border-blue-500/40 shrink-0 shadow-md">
             <div>
               <div class="text-[10px] text-amber-400 uppercase font-mono font-bold">${role.badge} · SHANKH</div>
               <h2 class="text-sm font-bold text-white">${role.name}</h2>
