@@ -243,7 +243,7 @@ def create_demo_session(
             id="USR-DEMO-JUDGE",
             username="demo.judge",
             email="judge.evaluator@aicte-india.org",
-            hashed_password=hash_password(secrets.token_urlsafe(16)),
+            password_hash=hash_password(secrets.token_urlsafe(16)),
             full_name="Honorable Evaluation Committee / Judge",
             role="DEMO_JUDGE",
             department="National Evaluation Bureau",
@@ -272,7 +272,7 @@ def create_demo_session(
         ip_address=request.client.host if request.client else "127.0.0.1",
         user_agent=request.headers.get("user-agent", "Browser Demo Session")[:255],
         expires_at=session_expire,
-        is_active=True
+        is_revoked=False
     )
     db.add(session_record)
     db.commit()
