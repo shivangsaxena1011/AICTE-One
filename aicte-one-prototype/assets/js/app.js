@@ -44,7 +44,6 @@ const App = {
     }
     await this.initRole();
     this.setupNavigation();
-    this.renderSidebar();
     this.setupGlobalSearch();
     this.setupModals();
     this.updateBackendStatusIndicator();
@@ -201,6 +200,29 @@ const App = {
         `;
       }
     }
+  },
+
+  switchPersona(roleCode) {
+    const meta = (typeof RBAC !== 'undefined' && RBAC.ROLE_META[roleCode]) ? RBAC.ROLE_META[roleCode] : { name: roleCode, badge: roleCode };
+    this.currentUser = {
+      id: `usr_${roleCode.toLowerCase()}`,
+      username: roleCode.toLowerCase(),
+      full_name: meta.name || roleCode,
+      email: `${roleCode.toLowerCase().replace('_', '.')}@aicte-india.org`,
+      role: roleCode,
+      department: meta.badge || 'Regulatory Administration',
+      permissions: ['*']
+    };
+    this.currentRole = {
+      id: roleCode,
+      name: meta.name || roleCode,
+      email: `${roleCode.toLowerCase().replace('_', '.')}@aicte-india.org`,
+      bureau: meta.badge || 'Regulatory Administration',
+      perms: meta.description || ''
+    };
+    this.updateRoleDisplay();
+    const defaultRoute = typeof RBAC !== 'undefined' ? RBAC.getDefaultRoute(roleCode) : 'overview';
+    this.navigate(defaultRoute);
   },
 
   async authenticatePersona(username, password = 'AicteOne@2026!', mfaCode = null) {
@@ -530,7 +552,6 @@ const App = {
 
     nav.innerHTML = html;
     this.setupNavigation();
-    this.renderSidebar();
   },
 
   renderAccessDenied(route, role) {

@@ -673,7 +673,7 @@ const AuthGateway = {
               <p class="text-xs text-slate-300 mb-5 leading-relaxed">
                 As a Public Visitor, you have open access to search 8,800+ AICTE-approved institutions across India, verify institutional approvals, and review open statutory reports without entering a password.
               </p>
-              <button class="w-full py-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer" onclick="AuthGateway.continueAsPublic()">
+              <button class="w-full py-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer" id="btn-visitor-continue" onclick="AuthGateway.continueAsPublic()">
                 <span>Continue to Public Institutional Directory →</span>
               </button>
             </div>
