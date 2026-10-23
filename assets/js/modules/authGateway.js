@@ -23,7 +23,7 @@ const AuthGateway = {
       badge: 'Statutory Apex',
       color: 'blue',
       privileged: true,
-      description: 'Comprehensive statutory and administrative authority across all bureaus, institutions, workflows, and immutable audit logs.',
+      description: 'Full statutory authority across central bureaus, institutions, approval workflows, and immutable audit logs.',
       defaultUsernameHint: 'superadmin'
     },
     {
@@ -34,7 +34,7 @@ const AuthGateway = {
       badge: 'Cyber & Vigilance',
       color: 'indigo',
       privileged: true,
-      description: 'Security incident monitoring, document forensic anomaly review, threat surveillance, and compliance verification.',
+      description: 'Security incident surveillance, document forensic anomaly review, threat monitoring, and system safeguards.',
       defaultUsernameHint: 'security.officer'
     },
     {
@@ -45,7 +45,7 @@ const AuthGateway = {
       badge: 'Academic Bureau',
       color: 'amber',
       privileged: false,
-      description: 'Statutory compliance tracking, land lease deed audits, FDR monitoring, fire NOC verification, and deficiency cure periods.',
+      description: 'Regulatory compliance audits, land lease deed tracking, FDR monitoring, and deficiency cure management.',
       defaultUsernameHint: 'compliance.officer'
     },
     {
@@ -56,7 +56,7 @@ const AuthGateway = {
       badge: 'Grievance Cell',
       color: 'red',
       privileged: false,
-      description: 'Grievance intake, investigation assignment, cross-bureau clash detection, and CPGRAMS matter resolution.',
+      description: 'Grievance intake, cross-bureau clash detection, vigilance case investigation, and CPGRAMS matter disposal.',
       defaultUsernameHint: 'complaint.officer'
     },
     {
@@ -67,7 +67,7 @@ const AuthGateway = {
       badge: 'Student Safety',
       color: 'rose',
       privileged: false,
-      description: 'National Anti-Ragging Cell jurisdiction, campus squad alerts, urgent hearing notices, and victim protection monitoring.',
+      description: 'Student safety enforcement, rapid campus squad alerts, urgent hearing notices, and victim protection monitoring.',
       defaultUsernameHint: 'antiragging.officer'
     },
     {
@@ -89,7 +89,7 @@ const AuthGateway = {
       badge: 'Citizen Access',
       color: 'emerald',
       privileged: false,
-      description: 'Public grievance lodging, ragging reporting, evidence submission, and real-time case milestone tracking.',
+      description: 'Citizen grievance lodging, ragging reporting, digital evidence submission, and real-time case milestone tracking.',
       defaultUsernameHint: 'student.aarav'
     },
     {
@@ -100,7 +100,7 @@ const AuthGateway = {
       badge: 'Open Registry',
       color: 'slate',
       privileged: false,
-      description: 'Open public search across 8,800+ approved institutions, approval status verification, and non-confidential reports.',
+      description: 'Open public directory search across 8,800+ approved institutions, approval status verification, and official records.',
       defaultUsernameHint: 'public.visitor'
     }
   ],
@@ -532,76 +532,85 @@ const AuthGateway = {
       <!-- Sovereign Government Tricolor Header Stripe -->
       <div class="h-1 bg-gradient-to-r from-[#ea580c] via-white to-[#059669] w-full shrink-0"></div>
 
-      <div class="flex-1 flex flex-col justify-between max-w-6xl mx-auto w-full p-4 sm:p-6 lg:p-8">
+      <div class="flex-1 flex flex-col justify-between max-w-6xl mx-auto w-full px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
         
         <!-- Header & Emblem -->
-        <div class="text-center mb-6 sm:mb-8">
-          <div class="inline-flex items-center justify-center gap-3.5 mb-3">
-            <img src="assets/img/shankh-logo.png" alt="SHANKH AICTE ONE Logo" class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-contain bg-white p-1 border-2 border-blue-400/50 shadow-2xl shrink-0">
+        <div class="text-center mb-5 sm:mb-6">
+          <div class="inline-flex items-center justify-center gap-3.5 mb-2.5">
+            <div class="w-13 h-13 sm:w-15 sm:h-15 rounded-xl bg-white p-1 border border-blue-400/40 shadow-lg shrink-0 flex items-center justify-center">
+              <img src="assets/img/shankh-logo.png" alt="SHANKH Logo" class="w-full h-full object-contain">
+            </div>
             <div class="text-left">
-              <div class="text-[10px] sm:text-xs tracking-wider uppercase font-bold text-amber-400 font-mono">अखिल भारतीय तकनीकी शिक्षा परिषद · Project SHANKH</div>
-              <h1 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">AICTE ONE — Central Governance & Intelligence Platform</h1>
-              <div class="text-[11px] text-blue-300 font-mono mt-0.5">CODE • ANALYZE • SOLVE — Sovereign Regulatory Engine</div>
+              <div class="text-[11px] sm:text-xs font-semibold text-amber-400 font-sans tracking-wide flex items-center gap-2">
+                <span>अखिल भारतीय तकनीकी शिक्षा परिषद</span>
+                <span class="text-[10px] font-mono uppercase px-1.5 py-0.2 rounded bg-amber-950/70 text-amber-300 border border-amber-500/30">Project SHANKH</span>
+              </div>
+              <h1 class="text-lg sm:text-2xl font-extrabold text-white tracking-tight mt-0.5">AICTE ONE — Central Governance & Intelligence Platform</h1>
+              <div class="text-[11px] text-blue-300 font-mono mt-0.5 font-medium">CODE • ANALYZE • SOLVE — Sovereign Autonomous Regulatory Engine</div>
             </div>
           </div>
-          <p class="text-xs sm:text-sm text-slate-400 max-w-2xl mx-auto">
-            Official Role-Based Statutory Authentication Gateway. Select your regulatory role to enter the secure jurisdiction under the AICTE Approval Process Handbook (APH 2024-27).
+          <p class="text-[11.5px] sm:text-xs text-slate-300/90 max-w-2xl mx-auto leading-relaxed">
+            Official Role-Based Statutory Authentication Gateway under the AICTE Approval Process Handbook (APH 2024-27). Select your statutory persona to access authorized regulatory jurisdictions.
           </p>
         </div>
 
-        <!-- Prominent Judge Demo Card -->
-        <div class="mb-6 bg-gradient-to-r from-purple-950/80 via-[#1e1035] to-purple-950/80 border border-purple-500/40 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl backdrop-blur-sm">
-          <div class="flex items-center gap-3.5 text-left">
-            <div class="w-10 h-10 rounded-lg bg-purple-900/80 border border-purple-400/50 flex items-center justify-center shrink-0">
-              <span class="material-symbols-outlined text-purple-300 text-2xl">verified</span>
+        <!-- Refined Compact Judge Demo Banner -->
+        <div class="mb-5 bg-gradient-to-r from-[#1f0e38] via-[#2d154f] to-[#1f0e38] border border-purple-500/40 rounded-xl px-4 py-2.5 sm:px-5 sm:py-3 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
+          <div class="flex items-center gap-3 text-left w-full sm:w-auto">
+            <div class="w-8 h-8 rounded-lg bg-purple-900/90 border border-purple-400/40 flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-purple-300 text-lg">verified</span>
             </div>
-            <div>
-              <div class="flex items-center gap-2">
-                <span class="text-xs font-bold uppercase tracking-wider text-purple-300 font-mono">Judges & Prototype Evaluators</span>
-                <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-purple-800 text-purple-200">No Password Required</span>
+            <div class="min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-xs font-bold uppercase tracking-wider text-purple-200 font-mono">Judges & Prototype Evaluators</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-800/90 text-purple-200 border border-purple-500/40">No Password Required</span>
               </div>
-              <p class="text-xs text-purple-200/80 mt-0.5">Explore the complete prototype with pre-populated datasets across 8,800+ colleges, complaints, EVCs, and document verification.</p>
+              <p class="text-[11px] text-purple-300/80 truncate sm:whitespace-normal">Explore full prototype with pre-populated datasets across 8,800+ colleges, complaints, EVCs & document verification.</p>
             </div>
           </div>
-          <button id="judge-demo-btn" class="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer active:scale-95" onclick="AuthGateway.enterJudgeDemo()">
-            <span>Enter Judge Demo Mode</span>
-            <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+          <button id="judge-demo-btn" class="w-full sm:w-auto px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer active:scale-95 border border-purple-400/40" onclick="AuthGateway.enterJudgeDemo()">
+            <span>Enter Judge Demo</span>
+            <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
           </button>
         </div>
 
-        <!-- Role Selection Cards Grid -->
+        <!-- Role Selection Cards Grid with Uniform Heights & Accessible Focus -->
         <div>
-          <div class="flex items-center justify-between mb-3 px-1">
-            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Select Statutory Governance Persona</span>
-            <span class="text-[11px] text-slate-500">8 Roles Available</span>
+          <div class="flex items-center justify-between mb-2.5 px-1">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Select Statutory Governance Persona</span>
+            <span class="text-[11px] text-slate-400 font-mono">8 Roles Available</span>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             ${this.ROLES.map(r => `
               <div 
                 id="role-card-${r.code.toLowerCase()}"
                 data-role="${r.code}"
+                tabindex="0"
+                role="button"
+                aria-label="Authenticate as ${r.name}"
                 onclick="AuthGateway.selectRole('${r.code}')"
-                class="group relative bg-[#0a1a36]/90 hover:bg-[#0f284e] border border-slate-700/60 hover:border-blue-500/80 rounded-xl p-4 transition-all duration-200 cursor-pointer shadow-md hover:shadow-blue-900/20 hover:-translate-y-0.5 flex flex-col justify-between"
+                onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); AuthGateway.selectRole('${r.code}'); }"
+                class="group relative bg-[#091830] hover:bg-[#0e2448] focus:bg-[#0e2448] border border-slate-700/80 hover:border-blue-400 focus:border-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded-xl p-3.5 sm:p-4 transition-all duration-200 cursor-pointer shadow-md hover:shadow-blue-950/40 hover:-translate-y-0.5 flex flex-col justify-between min-h-[210px] sm:min-h-[225px]"
               >
                 <div>
-                  <div class="flex items-start justify-between mb-3">
-                    <div class="w-10 h-10 rounded-lg bg-[#001332] border border-slate-700 group-hover:border-blue-400/50 flex items-center justify-center transition-colors">
-                      <span class="material-symbols-outlined text-blue-400 group-hover:text-amber-400 text-xl transition-colors">${r.icon}</span>
+                  <div class="flex items-start justify-between mb-2.5">
+                    <div class="w-9 h-9 rounded-lg bg-[#001332] border border-slate-700 group-hover:border-blue-400/60 group-focus:border-blue-400/60 flex items-center justify-center transition-colors">
+                      <span class="material-symbols-outlined text-blue-400 group-hover:text-amber-400 group-focus:text-amber-400 text-lg transition-colors">${r.icon}</span>
                     </div>
-                    <span class="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-slate-800/80 text-slate-300 border border-slate-700/80">
+                    <span class="text-[9.5px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-slate-800/90 text-slate-300 border border-slate-700">
                       ${r.badge}
                     </span>
                   </div>
 
-                  <h3 class="font-bold text-sm text-white group-hover:text-blue-300 transition-colors">${r.name}</h3>
-                  <div class="text-[10px] text-amber-400/80 font-mono mb-2">${r.hindi}</div>
-                  <p class="text-[11px] text-slate-400 leading-relaxed line-clamp-3">${r.description}</p>
+                  <h3 class="font-bold text-[13px] text-white group-hover:text-blue-300 transition-colors leading-snug">${r.name}</h3>
+                  <div class="text-[11px] text-amber-400/90 font-medium mb-1.5 font-sans">${r.hindi}</div>
+                  <p class="text-[11.5px] text-slate-300/90 leading-relaxed font-normal">${r.description}</p>
                 </div>
 
-                <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-blue-400 font-semibold group-hover:text-amber-400 transition-colors">
+                <div class="mt-3.5 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-blue-400 font-semibold group-hover:text-amber-400 group-focus:text-amber-400 transition-colors">
                   <span>${r.code === 'PUBLIC_VISITOR' ? 'Open Access' : 'Authenticate Role'}</span>
-                  <span class="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                  <span class="material-symbols-outlined text-[15px] group-hover:translate-x-1 group-focus:translate-x-1 transition-transform">arrow_forward</span>
                 </div>
               </div>
             `).join('')}
@@ -609,7 +618,7 @@ const AuthGateway = {
         </div>
 
         <!-- Footer Notice -->
-        <div class="text-center text-[11px] text-slate-500 mt-6 pt-4 border-t border-slate-800/60 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div class="text-center text-[11px] text-slate-400 mt-5 pt-3.5 border-t border-slate-800/60 flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>AICTE ONE Platform v2.4.0 · Statutory Architecture Compliant</span>
           <span>Security Notice: All administrative logins are cryptographically logged to the Sovereign Audit Trail</span>
         </div>
