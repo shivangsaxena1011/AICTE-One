@@ -100,28 +100,53 @@ const GraphModule = {
 
     this.ctx = this.canvas.getContext("2d");
     this.resizeCanvas();
-    window.addEventListener("resize", () => this.resizeCanvas());
+    window.removeEventListener("resize", this._onResize);
+    this._onResize = () => this.resizeCanvas();
+    window.addEventListener("resize", this._onResize);
 
     this.setupEvents();
     await this.loadData();
     this.startSimulation();
   },
 
+  postRender() {
+    // Canvas requires DOM to be painted before sizing
+    setTimeout(() => {
+      this.initCanvas();
+    }, 50);
+  },
+
+  destroy() {
+    if (this.animationId) {
+      cancelAnimationFrame(this.animationId);
+      this.animationId = null;
+    }
+    if (this._onResize) {
+      window.removeEventListener("resize", this._onResize);
+    }
+  },
+
   resizeCanvas() {
     if (!this.canvas) return;
-    const rect = this.canvas.parentElement.getBoundingClientRect();
-    this.canvas.width = rect.width;
-    this.canvas.height = rect.height;
+    const rect = this.canvas.parentElement ? this.canvas.parentElement.getBoundingClientRect() : { width: 900, height: 520 };
+    this.canvas.width = rect.width > 0 ? rect.width : 900;
+    this.canvas.height = rect.height > 0 ? rect.height : 520;
   },
 
   async loadData() {
     const raw = await API.getGraphData();
+    if (!raw || !raw.nodes) {
+      console.warn("No graph data returned from API, using fallback");
+      this.nodes = [];
+      this.edges = [];
+      return;
+    }
     const w = this.canvas ? this.canvas.width : 900;
-    const h = this.canvas ? this.canvas.height : 500;
+    const h = this.canvas ? this.canvas.height : 520;
 
     // Initialize node positions in a radial cluster
-    this.nodes = raw.nodes.map((n, idx) => {
-      const angle = (idx / raw.nodes.length) * 2 * Math.PI;
+    this.nodes = (raw.nodes || []).map((n, idx) => {
+      const angle = (idx / Math.max(raw.nodes.length, 1)) * 2 * Math.PI;
       const radius = 120 + Math.random() * 150;
       return {
         ...n,
@@ -133,7 +158,7 @@ const GraphModule = {
       };
     });
 
-    this.edges = raw.edges;
+    this.edges = raw.edges || [];
     this.resetView();
   },
 

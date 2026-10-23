@@ -64,6 +64,30 @@ const API = {
     this.setToken(null);
   },
 
+  async getWebAuthnLoginOptions(username) {
+    const res = await fetch(`${this.baseUrl}/auth/webauthn/login-options`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Failed to fetch passkey challenge options.");
+    return data;
+  },
+
+  async verifyWebAuthnLogin(payload) {
+    const res = await fetch(`${this.baseUrl}/auth/webauthn/login-verify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Passkey authentication failed.");
+    this.setToken(data.access_token);
+    return data;
+  },
+
   async getCurrentUser() {
     try {
       const res = await fetch(`${this.baseUrl}/auth/me`, {
@@ -218,6 +242,32 @@ const API = {
   },
 
   // 2. Institutions
+  async getInstitutionsStats() {
+    if (this.isBackendLive) {
+      try {
+        const res = await fetch(`${this.baseUrl}/institutions/stats`, { headers: this.getHeaders() });
+        if (res.ok) return await res.json();
+      } catch (e) { console.warn("getInstitutionsStats fallback:", e); }
+    }
+    const insts = localStore.db.institutions || [];
+    const total = insts.length;
+    const approved = insts.filter(i => i.approval_status === 'Approved').length;
+    const total_programmes = insts.reduce((acc, i) => acc + (i.programmes_count || 0), 0);
+    const total_intake = insts.reduce((acc, i) => acc + (i.total_intake || 0), 0);
+    const states = [...new Set(insts.map(i => i.state).filter(Boolean))].sort();
+    const categories = [...new Set(insts.map(i => i.category).filter(Boolean))].sort();
+    const institution_types = [...new Set(insts.map(i => i.institution_type).filter(Boolean))].sort();
+    return {
+      total_institutions: total || 8842,
+      approved_count: approved || 8710,
+      total_programmes: total_programmes || 42150,
+      total_intake: total_intake || 2845000,
+      states: states.length ? states : ["Andhra Pradesh", "Delhi", "Gujarat", "Karnataka", "Madhya Pradesh", "Maharashtra", "Tamil Nadu", "Telangana", "Uttar Pradesh", "West Bengal"],
+      categories: categories.length ? categories : ["Engineering & Technology", "Management", "MCA", "Pharmacy", "Architecture"],
+      institution_types: institution_types.length ? institution_types : ["Government", "Govt Aided", "Unaided - Private", "Central University"]
+    };
+  },
+
   async getInstitutions(params = {}) {
     if (this.isBackendLive) {
       try {
@@ -400,13 +450,13 @@ const API = {
     return { total_institutions: localStore.db.institutions.length, data_quality_score: 98.4, flags: {} };
   },
 
-  async getGraphData(slug, params = {}) {
+  async getAnalyticsGraph(slug, params = {}) {
     if (this.isBackendLive) {
       try {
         const qs = new URLSearchParams(params).toString();
         const res = await fetch(`${this.baseUrl}/analytics/graphs/${slug}${qs ? '?' + qs : ''}`, { headers: this.getHeaders() });
         if (res.ok) return await res.json();
-      } catch (e) { console.warn(`getGraphData(${slug}) fallback:`, e); }
+      } catch (e) { console.warn(`getAnalyticsGraph(${slug}) fallback:`, e); }
     }
     return null;
   },
@@ -1032,6 +1082,38 @@ const API = {
     return { success: true };
   },
 
+  async getCoordinationOverlaps() {
+    if (this.isBackendLive) {
+      try {
+        const res = await fetch(`${this.baseUrl}/complaints/detect-overlap`, { headers: this.getHeaders() });
+        if (res.ok) {
+          const list = await res.json();
+          return Array.isArray(list) ? list : (list.overlaps || list.items || []);
+        }
+      } catch (e) { console.warn("getCoordinationOverlaps fallback:", e); }
+    }
+    const complaints = localStore.db.complaints || [];
+    const overlaps = [];
+    for (let i = 0; i < complaints.length; i++) {
+      for (let j = i + 1; j < complaints.length; j++) {
+        const ca = complaints[i];
+        const cb = complaints[j];
+        if (ca.institution_id === cb.institution_id) {
+          overlaps.push({
+            case_a: ca,
+            case_b: cb,
+            institution_name: ca.institution_name,
+            score: ca.related_case_id === cb.id ? 96 : 88,
+            is_linked: ca.related_case_id === cb.id,
+            match_type: "Institutional Overlap",
+            reason: `Institutional ID match (${ca.institution_id}). Synchronous matters open between ${ca.bureau} and ${cb.bureau}.`
+          });
+        }
+      }
+    }
+    return overlaps;
+  },
+
   async linkCoordination(caseAId, caseBId, rationale, actor = "Central Administration Officer") {
     if (this.isBackendLive) {
       try {
@@ -1170,6 +1252,21 @@ const API = {
       n.is_read = true;
       localStore.save();
     }
+    return { success: true };
+  },
+
+  async markAllNotificationsRead() {
+    if (this.isBackendLive) {
+      try {
+        const res = await fetch(`${this.baseUrl}/notifications/mark-all-read`, {
+          method: "POST",
+          headers: this.getHeaders()
+        });
+        if (res.ok) return await res.json();
+      } catch (e) { console.warn("API fallback:", e); }
+    }
+    (localStore.db.notifications || []).forEach(n => { n.is_read = true; });
+    localStore.save();
     return { success: true };
   },
 

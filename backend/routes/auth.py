@@ -460,6 +460,7 @@ ACTIVE_WEBAUTHN_CHALLENGES: Dict[str, Dict[str, Any]] = {}
 
 @router.post("/webauthn/register-options")
 def webauthn_register_options(
+    request: Request,
     user: User = Depends(get_current_user)
 ):
     """
@@ -471,11 +472,12 @@ def webauthn_register_options(
         "type": "register",
         "created_at": time.time()
     }
+    rp_id = request.url.hostname if request.url.hostname and request.url.hostname != "127.0.0.1" else "localhost"
     return {
         "challenge": challenge,
         "rp": {
             "name": "AICTE ONE Sovereign Governance Platform",
-            "id": "aicte-india.org"
+            "id": rp_id
         },
         "user": {
             "id": user.id,
@@ -536,6 +538,7 @@ def webauthn_register_verify(
 
 @router.post("/webauthn/login-options")
 def webauthn_login_options(
+    request: Request,
     payload: Dict[str, str] = Body(...),
     db: Session = Depends(get_db)
 ):
@@ -557,10 +560,12 @@ def webauthn_login_options(
         "created_at": time.time()
     }
 
+    rp_id = request.url.hostname if request.url.hostname and request.url.hostname != "127.0.0.1" else "localhost"
+
     return {
         "challenge": challenge,
         "timeout": 60000,
-        "rpId": "aicte-india.org",
+        "rpId": rp_id,
         "allowCredentials": [
             {
                 "type": "public-key",

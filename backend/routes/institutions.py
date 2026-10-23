@@ -37,6 +37,35 @@ router = APIRouter(prefix="/api/institutions", tags=["Institutions"])
 # -------------------------------------------------------------
 # 1. Authoritative Directory Search & Listing
 # -------------------------------------------------------------
+@router.get("/stats")
+def get_institutions_stats(db: Session = Depends(get_db)):
+    """
+    Returns authoritative aggregate stats and distinct filter options across all 8,800+ institutions.
+    """
+    total = db.query(func.count(Institution.id)).scalar() or 0
+    approved = db.query(func.count(Institution.id)).filter(Institution.approval_status == "Approved").scalar() or 0
+    total_programmes = db.query(func.sum(Institution.programmes_count)).scalar() or 0
+    total_intake = db.query(func.sum(Institution.total_intake)).scalar() or 0
+
+    raw_states = db.query(Institution.state).distinct().all()
+    states = sorted([s[0] for s in raw_states if s[0] and s[0].strip()])
+
+    raw_cats = db.query(Institution.category).distinct().all()
+    categories = sorted([c[0] for c in raw_cats if c[0] and c[0].strip()])
+
+    raw_types = db.query(Institution.institution_type).distinct().all()
+    institution_types = sorted([t[0] for t in raw_types if t[0] and t[0].strip()])
+
+    return {
+        "total_institutions": total,
+        "approved_count": approved,
+        "total_programmes": int(total_programmes),
+        "total_intake": int(total_intake),
+        "states": states,
+        "categories": categories,
+        "institution_types": institution_types
+    }
+
 @router.get("", response_model=dict)
 def list_institutions(
     q: Optional[str] = Query(None, description="Search by name, permanent_id, or city"),

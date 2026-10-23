@@ -39,6 +39,9 @@ const App = {
 
   async init() {
     await API.checkBackendHealth();
+    if (typeof AuthGateway !== 'undefined') {
+      AuthGateway.init();
+    }
     await this.initRole();
     this.setupNavigation();
     this.setupGlobalSearch();
@@ -99,16 +102,17 @@ const App = {
         try {
           this.currentRole = JSON.parse(saved);
         } catch (e) {
-          this.currentRole = (window.SettingsModule && SettingsModule.roles) ? SettingsModule.roles[0] : null;
+          this.currentRole = null;
         }
       }
       if (!this.currentRole) {
+        // Default strictly to Public Visitor, never auto-assign Admin
         this.currentRole = {
-          id: 'ADMIN',
-          name: 'System Administrator',
-          email: 'admin@aicte-india.org',
-          bureau: 'Central Administration',
-          perms: 'Full Administrative & Configuration Access'
+          id: 'PUBLIC_VISITOR',
+          name: 'Public Visitor',
+          email: 'citizen@bharat.in',
+          bureau: 'Public Access',
+          perms: 'Public Directory & Search'
         };
       }
     }
@@ -217,9 +221,20 @@ const App = {
       bureau: 'Public Access',
       perms: 'Public Directory & Search'
     };
+    localStorage.removeItem('aicte_current_role');
+    sessionStorage.removeItem('aicte_judge_demo');
+
+    if (typeof AuthGateway !== 'undefined') {
+      AuthGateway.isJudgeDemo = false;
+      const banner = document.getElementById('judge-demo-banner');
+      if (banner) banner.remove();
+      AuthGateway.step = 1;
+      AuthGateway.selectedRole = null;
+      AuthGateway.show();
+    }
+
     this.updateRoleDisplay();
     this.toast('Signed out successfully. Session invalidated.', 'info');
-    this.navigate('overview');
   },
 
   showLoginModal(targetRoute = null) {
@@ -482,9 +497,14 @@ const App = {
 
     // Public vs Protected route check
     const publicRoutes = ['overview', 'executive-intelligence', 'institutions', 'digitalTwin', 'digital-twin', 'digital_twin', 'institution-digital-twin', 'reports', 'settings'];
-    if (API.isBackendConnected() && !this.currentUser && !publicRoutes.includes(route)) {
+    const isDemo = typeof AuthGateway !== 'undefined' && AuthGateway.isJudgeDemo;
+    if (!this.currentUser && !isDemo && !publicRoutes.includes(route)) {
       this.toast('Authentication required to access officer or institutional workflow.', 'info');
-      this.showLoginModal(route);
+      if (typeof AuthGateway !== 'undefined') {
+        AuthGateway.show();
+      } else {
+        this.showLoginModal(route);
+      }
       return;
     }
 
@@ -508,11 +528,18 @@ const App = {
     // Close mobile sidebar if open
     this.toggleSidebar(false);
 
+    // Call destroy on previous module if it exists
+    if (this._currentModuleInstance && typeof this._currentModuleInstance.destroy === 'function') {
+      try { this._currentModuleInstance.destroy(); } catch (e) { console.warn(e); }
+      this._currentModuleInstance = null;
+    }
+
     // Render target module
     const moduleGetter = this.modules[route];
     if (moduleGetter) {
       const module = moduleGetter();
       if (module && typeof module.render === 'function') {
+        this._currentModuleInstance = module;
         const contentContainer = document.getElementById('main-content');
         try {
           // If param is passed as string, also pass as { id: param } for modules expecting object

@@ -103,8 +103,8 @@ const SettingsModule = {
               Sign Out (${currentUser.username})
             </button>
           ` : `
-            <button class="btn btn-primary text-xs" onclick="App.showLoginModal()">
-              Sign In with Credentials
+            <button class="btn btn-primary text-xs" onclick="typeof AuthGateway !== 'undefined' ? AuthGateway.show() : App.showLoginModal()">
+              Sign In via Role Gateway
             </button>
           `}
         </div>
