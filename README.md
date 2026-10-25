@@ -1,5 +1,7 @@
 # AICTE ONE — Unified Institution Intelligence, Approval, Compliance & Document Verification Platform
 
+[![Author: Shivang Saxena](https://img.shields.io/badge/Author-Shivang%20Saxena-blue.svg)](https://github.com/shivangsaxena1011)
+[![Original Repository](https://img.shields.io/badge/Original%20Repository-shivangsaxena1011%2FAICTE--One-purple.svg)](https://github.com/shivangsaxena1011/AICTE-One)
 [![Production Status](https://img.shields.io/badge/Production-Live%20on%20Vercel-success.svg)](https://aicte-one.vercel.app/)
 [![Architecture: Enterprise Grade](https://img.shields.io/badge/Architecture-FastAPI%20%2B%20Serverless%20REST-blue.svg)](#system-architecture)
 [![Design System](https://img.shields.io/badge/Design%20System-Bharat%20Civic--Sovereign%20Tech-orange.svg)](#design-system--uiux)
@@ -11,9 +13,10 @@
 
 > **"One Institution. One Connected Workflow. Evidence-Based Governance."**
 
+- **Lead Developer & System Architect:** **Shivang Saxena** ([@shivangsaxena1011](https://github.com/shivangsaxena1011))
 - **Live Production URL:** [https://aicte-one.vercel.app/](https://aicte-one.vercel.app/)
 - **Document Verification:** [https://documentverify-two.vercel.app/](https://documentverify-two.vercel.app/)
-- **Repository:** [https://github.com/shivangsaxena1011/AICTE-One](https://github.com/shivangsaxena1011/AICTE-One)
+- **Canonical Original Repository:** [https://github.com/shivangsaxena1011/AICTE-One](https://github.com/shivangsaxena1011/AICTE-One)
 
 ---
 
@@ -26,9 +29,9 @@
 5. [System Architecture & Resilience](#system-architecture--resilience)
 6. [The 17 Statutory Governance Modules](#the-17-statutory-governance-modules)
 7. [Live REST API Specification](#live-rest-api-specification)
-8. [Running Locally & Deployment Guide](#running-locally--deployment-guide)
-9. [Automated Verification & Security Audit](#automated-verification--security-audit)
-10. [Regulatory Grounding & Honest Data Integrity](#regulatory-grounding--honest-data-integrity)
+8. [Automated Verification & Security Audit](#automated-verification--security-audit)
+9. [Regulatory Grounding & Honest Data Integrity](#regulatory-grounding--honest-data-integrity)
+10. [Author, License & Anti-Plagiarism Notice](#author-license--anti-plagiarism-notice)
 
 ---
 
@@ -266,47 +269,6 @@ GET    /api/notifications                # Notification stream (Role-filtered)
 
 ---
 
-## Running Locally & Deployment Guide
-
-### Prerequisites
-- Python 3.10+ (tested on Python 3.12 and 3.14)
-- Node.js 18+ (for frontend AST verification)
-
-### 1. Local Development (FastAPI + Client)
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/shivangsaxena1011/AICTE-One.git
-cd "AICTE One"
-
-# 2. Install Python dependencies
-pip install -r requirements.txt
-
-# 3. Start the FastAPI backend
-python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
-```
-
-Open your browser at `http://127.0.0.1:8000/`. The backend will automatically serve both the REST API and the frontend application with active database seeding.
-
-*(On Windows, you can also double-click `RUN_AICTE_ONE.bat` to launch automatically).*
-
-### 2. Running Automated Tests
-
-```bash
-# Run full regression test suite (109 tests)
-python -m pytest -v
-```
-
-### 3. Deployment on Vercel
-
-AICTE ONE is pre-configured for zero-friction serverless deployment on Vercel:
-
-1. Import the repository in [Vercel](https://vercel.com/new).
-2. Set the **Framework Preset** to **`Other`**.
-3. Click **Deploy**. Vercel builds and deploys both the frontend single-page application and Python serverless API functions automatically.
-
----
-
 ## Automated Verification & Security Audit
 
 AICTE ONE passes comprehensive automated security and regression test suites:
@@ -335,6 +297,15 @@ AICTE ONE strictly adheres to statutory principles outlined in the **AICTE Act 1
 
 ---
 
-## License & Attribution
+## Author, License & Anti-Plagiarism Notice
 
-Developed for the **Ministry of Education, Government of India** and the **All India Council for Technical Education (AICTE)** as an Enterprise Regulatory Platform for the Smart India Hackathon (SIH 2026) Initiative.
+- **Original Author & System Architect:** **Shivang Saxena**  
+- **GitHub Profile:** [@shivangsaxena1011](https://github.com/shivangsaxena1011)  
+- **Official Canonical Repository:** [https://github.com/shivangsaxena1011/AICTE-One](https://github.com/shivangsaxena1011/AICTE-One)  
+- **Initiative:** Developed for the **Ministry of Education, Government of India** and the **All India Council for Technical Education (AICTE)** as an Enterprise Regulatory Platform for the Smart India Hackathon (SIH 2026) Initiative.
+
+> ### ⚠️ Notice Regarding Unauthorized Copying & Plagiarism
+> This platform, source code, system architecture, database models, and governance workflows are the original intellectual work of **Shivang Saxena**.  
+> **Direct copying, mirroring, unauthorized re-uploading, or plagiarism of this repository without explicit authorization and mandatory attribution is strictly prohibited.** Any legitimate evaluation, academic demonstration, or review must explicitly credit **Shivang Saxena** as the original author and link directly to the primary repository above.
+
+© 2026 Shivang Saxena. All Rights Reserved.
