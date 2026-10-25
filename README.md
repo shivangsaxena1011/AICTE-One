@@ -304,8 +304,4 @@ AICTE ONE strictly adheres to statutory principles outlined in the **AICTE Act 1
 - **Official Canonical Repository:** [https://github.com/shivangsaxena1011/AICTE-One](https://github.com/shivangsaxena1011/AICTE-One)  
 - **Initiative:** Developed for the **Ministry of Education, Government of India** and the **All India Council for Technical Education (AICTE)** as an Enterprise Regulatory Platform for the Smart India Hackathon (SIH 2026) Initiative.
 
-> ### ⚠️ Notice Regarding Unauthorized Copying & Plagiarism
-> This platform, source code, system architecture, database models, and governance workflows are the original intellectual work of **Shivang Saxena**.  
-> **Direct copying, mirroring, unauthorized re-uploading, or plagiarism of this repository without explicit authorization and mandatory attribution is strictly prohibited.** Any legitimate evaluation, academic demonstration, or review must explicitly credit **Shivang Saxena** as the original author and link directly to the primary repository above.
-
 © 2026 Shivang Saxena. All Rights Reserved.
